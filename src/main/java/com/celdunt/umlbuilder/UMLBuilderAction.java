@@ -83,6 +83,9 @@ public class UMLBuilderAction extends AnAction {
 
         for (UMLClass classItem : classes)
             classItem.draw(g2d);
+
+        if (classes.size() > 1)
+            classes.get(1).linkClass(classes.get(0), new UMLInheritRelationship(), g2d);
     }
     private Graphics2D createGraphics(BufferedImage bufferedImage, Color background, int width, int height) {
         final Graphics2D g2d = bufferedImage.createGraphics();

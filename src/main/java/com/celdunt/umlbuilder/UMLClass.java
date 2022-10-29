@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class UMLClass extends UMLFigure{
+public class UMLClass extends UMLFigure {
     public static final String abstractType = "A";
     public static final String classType = "C";
     public static final String interfaceType = "I";
@@ -38,23 +38,37 @@ public class UMLClass extends UMLFigure{
 
         calculateSizeClassRectangle();
 
-        g2d.drawRect(this.x, this.y, (int)this.width, (int)this.height);
+        g2d.drawRect(this.x, this.y, (int) this.width, (int) this.height);
 
         switch (type) {
-            case classType: drawTypeClassCircle(g2d, type, classHexCode);
-            case abstractType: drawTypeClassCircle(g2d, type, abstractHexCode);
-            case interfaceType: drawTypeClassCircle(g2d, type, interfaceHexCode);
+            case classType:
+                drawTypeClassCircle(g2d, type, classHexCode);
+            case abstractType:
+                drawTypeClassCircle(g2d, type, abstractHexCode);
+            case interfaceType:
+                drawTypeClassCircle(g2d, type, interfaceHexCode);
         }
 
         drawContentClass(g2d);
     }
 
+    public void linkClass(UMLClass out, UMLInheritRelationship relationship, Graphics2D g2d) {
+        //fix
+        relationship.defStartX(out.x + (int)out.width)
+                .defStartY(out.y + (int)out.height/2)
+                .defEndX(this.x - 10)
+                .defEndY(this.y + (int)this.height/2)
+                .draw(g2d);
+    }
+
     private int getTextWidth(String text) {
-        return (int)font.getStringBounds(text, fontRenderContext).getWidth();
+        return (int) font.getStringBounds(text, fontRenderContext).getWidth();
     }
+
     private int getTextHeight(String text) {
-        return (int)font.getStringBounds(text, fontRenderContext).getHeight();
+        return (int) font.getStringBounds(text, fontRenderContext).getHeight();
     }
+
     private void calculateSizeClassRectangle() {
         AtomicInteger widthFields = new AtomicInteger(0);
         AtomicInteger heightFields = new AtomicInteger(0);
@@ -77,12 +91,14 @@ public class UMLClass extends UMLFigure{
         if (heightOval + 2 * margin + getTextHeight(name) + heightContent > this.height)
             this.height = heightOval + 5 * margin + getTextHeight(name) + heightContent;
     }
+
     private void calculateMaxSize(AtomicInteger width, AtomicInteger height, ArrayList<String> listString) {
         for (String item : listString) {
             height.addAndGet(getTextHeight(item));
             width.set(Integer.max(width.get(), getTextWidth(item)));
         }
     }
+
     private void drawTypeClassCircle(Graphics2D g2d, String type, String hexCode) {
         g2d.setColor(Color.decode(hexCode));
         g2d.fillOval(this.x + margin, this.y + margin, widthOval, heightOval);
@@ -95,6 +111,7 @@ public class UMLClass extends UMLFigure{
         g2d.drawString(type, this.x + widthOval / 2 + posInnerX, this.y + getTextHeight(type) + heightOval / 2 + posInnerY);
         g2d.drawString(name, this.x + margin + widthOval + margin, this.y + getTextHeight(name) + 2 * margin);
     }
+
     private void drawContentClass(Graphics2D g2d) {
         AtomicInteger currentY = new AtomicInteger(this.y + 2 * heightOval);
 
@@ -106,9 +123,10 @@ public class UMLClass extends UMLFigure{
 
         drawContentClassStrings(g2d, currentY, methods);
     }
+
     private void drawContentClassStrings(Graphics2D g2d, AtomicInteger currentY, ArrayList<String> listString) {
         for (String item : listString) {
-            g2d.drawString(item, (int)(this.x + this.width / 2 - getTextWidth(item) / 2), currentY.get());
+            g2d.drawString(item, (int) (this.x + this.width / 2 - getTextWidth(item) / 2), currentY.get());
             currentY.addAndGet(getTextHeight(item));
         }
     }
@@ -117,22 +135,27 @@ public class UMLClass extends UMLFigure{
         this.width = width;
         return this;
     }
+
     public UMLClass defHeight(double height) {
         this.height = height;
         return this;
     }
+
     public UMLClass defColor(Color color) {
         this.color = color;
         return this;
     }
+
     public UMLClass defX(int x) {
         this.x = x;
         return this;
     }
+
     public UMLClass defY(int y) {
         this.y = y;
         return this;
     }
+
     public UMLClass defType(String type) {
         if (Objects.equals(type, UMLClass.classType) ||
                 Objects.equals(type, UMLClass.abstractType) ||
@@ -140,14 +163,17 @@ public class UMLClass extends UMLFigure{
             this.type = type;
         return this;
     }
+
     public UMLClass defName(String name) {
         this.name = name;
         return this;
     }
+
     public UMLClass defFields(ArrayList<String> fields) {
         this.fields.addAll(fields);
         return this;
     }
+
     public UMLClass defMethods(ArrayList<String> methods) {
         this.methods.addAll(methods);
         return this;
