@@ -52,7 +52,7 @@ public class UMLClass extends UMLFigure {
         drawContentClass(g2d);
     }
 
-    public void linkClass(UMLClass out, UMLInheritRelationship relationship, Graphics2D g2d) {
+    public void linkClass(UMLClass out, UMLRelationship relationship, Graphics2D g2d) {
         //fix
         relationship.defStartX(out.x + (int)out.width)
                 .defStartY(out.y + (int)out.height/2)
