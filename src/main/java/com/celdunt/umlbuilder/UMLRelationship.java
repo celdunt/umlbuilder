@@ -11,6 +11,7 @@ public abstract class UMLRelationship extends UMLFigure {
     protected final Polygon downArrow = new Polygon();
     protected final Polygon leftArrow = new Polygon();
     protected final Polygon rightArrow = new Polygon();
+    protected BasicStroke strokeArrow = new BasicStroke();
 
     @Override
     public void draw(Graphics2D g2d) {
@@ -18,11 +19,17 @@ public abstract class UMLRelationship extends UMLFigure {
         defineDownArrow();
         defineLeftArrow();
         defineRightArrow();
+        defineStrokeArrow();
 
         final int inaccuracy = 100;
 
         g2d.setColor(this.color);
+
+        g2d.setStroke(strokeArrow);
+
         g2d.drawLine(x, y, endX, endY);
+
+        g2d.setStroke(new BasicStroke(1));
 
         if (x > endX && y - endY <= Math.abs(inaccuracy)) g2d.drawPolygon(leftArrow);
         else if (endX > x && y - endY <= Math.abs(inaccuracy)) g2d.drawPolygon(rightArrow);
@@ -34,6 +41,7 @@ public abstract class UMLRelationship extends UMLFigure {
     abstract void defineDownArrow();
     abstract void defineLeftArrow();
     abstract void defineRightArrow();
+    abstract void defineStrokeArrow();
 
     public UMLRelationship defStartX(int startX) {
         this.x = startX;

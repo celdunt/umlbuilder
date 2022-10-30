@@ -54,10 +54,41 @@ public class UMLClass extends UMLFigure {
 
     public void linkClass(UMLClass out, UMLRelationship relationship, Graphics2D g2d) {
         //fix
-        relationship.defStartX(out.x + (int)out.width)
-                .defStartY(out.y + (int)out.height/2)
-                .defEndX(this.x - 10)
-                .defEndY(this.y + (int)this.height/2)
+        //out = start
+        // this = end
+
+        int inaccuracy = 100;
+        int startX = 0;
+        int startY = 0;
+        int endX = 0;
+        int endY = 0;
+
+        if (out.x > this.x && out.y - this.y <= Math.abs(inaccuracy)) {
+            startX = out.x;
+            endX = this.x + (int) this.width + 10;
+            startY = out.y + (int) out.height/2;
+            endY = this.y + (int) this.height/2;
+        } else if (this.x > out.x && out.y - this.y <= Math.abs(inaccuracy)) {
+            startX = out.x + (int)out.width;
+            endX = this.x - 10;
+            startY = out.y + (int) out.height/2;
+            endY = this.y + (int) this.height/2;
+        } else if (out.y > this.y && out.y - this.y <= Math.abs(inaccuracy)) {
+            startY = out.y;
+            endY = this.y + (int) this.height + 10;
+            startX = out.x + (int) out.width/2;
+            endX = this.x + (int) this.width/2;
+        } else if (this.y > out.y && out.y - this.y <= Math.abs(inaccuracy)) {
+            startY = out.y + (int) out.height;
+            endY = this.y - 10;
+            startX = out.x + (int) out.width/2;
+            endX = this.x + (int) this.width/2;
+        }
+
+        relationship.defStartX(startX)
+                .defStartY(startY)
+                .defEndX(endX)
+                .defEndY(endY)
                 .draw(g2d);
     }
 

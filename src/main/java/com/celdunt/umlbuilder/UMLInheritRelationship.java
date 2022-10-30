@@ -30,4 +30,8 @@ public class UMLInheritRelationship extends UMLRelationship {
         rightArrow.ypoints = new int[] {endY + 5, endY - 5, endY, endY + 5};
         rightArrow.npoints = 4;
     }
+    @Override
+    void defineStrokeArrow() {
+        strokeArrow = new BasicStroke(1);
+    }
 }
