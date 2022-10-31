@@ -4,19 +4,27 @@ import java.awt.*;
 
 public abstract class UMLRelationship extends UMLFigure {
 
+    public enum ArrowDirection {
+        LEFT,
+        RIGHT,
+        UP,
+        DOWN
+    }
+
     public UMLRelationship(int sizeArrow) {
         this.sizeArrow = sizeArrow;
     }
 
     protected int endX = 0;
     protected int endY = 0;
-    protected int sizeArrow = 10;
+    protected int sizeArrow;
 
     protected final Polygon upArrow = new Polygon();
     protected final Polygon downArrow = new Polygon();
     protected final Polygon leftArrow = new Polygon();
     protected final Polygon rightArrow = new Polygon();
     protected BasicStroke strokeArrow = new BasicStroke();
+    protected ArrowDirection arrowDirection = ArrowDirection.LEFT;
 
     @Override
     public void draw(Graphics2D g2d) {
@@ -26,8 +34,6 @@ public abstract class UMLRelationship extends UMLFigure {
         defineRightArrow();
         defineStrokeArrow();
 
-        final int inaccuracy = 500;
-
         g2d.setColor(this.color);
 
         g2d.setStroke(strokeArrow);
@@ -36,13 +42,15 @@ public abstract class UMLRelationship extends UMLFigure {
 
         g2d.setStroke(new BasicStroke(1));
 
-        calculateArrowDirection(inaccuracy, g2d);
+        calculateArrowDirection(g2d);
     }
-    private void calculateArrowDirection(int inaccuracy, Graphics2D g2d) {
-        if (x > endX && y - endY <= Math.abs(inaccuracy)) g2d.drawPolygon(leftArrow);
-        else if (endX > x && y - endY <= Math.abs(inaccuracy)) g2d.drawPolygon(rightArrow);
-        else if (y > endY && x - endX <= Math.abs(inaccuracy)) g2d.drawPolygon(upArrow);
-        else if (endY > y && x - endX <= Math.abs(inaccuracy)) g2d.drawPolygon(downArrow);
+    private void calculateArrowDirection(Graphics2D g2d) {
+        switch (arrowDirection) {
+            case LEFT: g2d.drawPolygon(leftArrow); break;
+            case RIGHT: g2d.drawPolygon(rightArrow); break;
+            case UP: g2d.drawPolygon(upArrow); break;
+            case DOWN: g2d.drawPolygon(downArrow); break;
+        }
     }
 
     abstract void defineUpArrow();
@@ -65,6 +73,10 @@ public abstract class UMLRelationship extends UMLFigure {
     }
     public UMLRelationship defEndY(int endY) {
         this.endY = endY;
+        return this;
+    }
+    public UMLRelationship defArrowDirection(ArrowDirection arrowDirection) {
+        this.arrowDirection = arrowDirection;
         return this;
     }
 }
