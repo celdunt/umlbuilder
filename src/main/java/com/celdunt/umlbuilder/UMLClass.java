@@ -53,43 +53,41 @@ public class UMLClass extends UMLFigure {
     }
 
     public void linkClass(UMLClass out, UMLRelationship relationship, Graphics2D g2d) {
-        //fix
-        //out = start
-        // this = end
+        int inaccuracy = 500;
+        AtomicInteger startX = new AtomicInteger(out.x);
+        AtomicInteger startY = new AtomicInteger(out.y);
+        AtomicInteger endX = new AtomicInteger(this.x);
+        AtomicInteger endY = new AtomicInteger(this.y);
 
-        int inaccuracy = 100;
-        int startX = 0;
-        int startY = 0;
-        int endX = 0;
-        int endY = 0;
+        calculateXYValues(startX, startY, endX, endY, (int)out.width, (int)out.height, relationship.sizeArrow, inaccuracy);
 
-        if (out.x > this.x && out.y - this.y <= Math.abs(inaccuracy)) {
-            startX = out.x;
-            endX = this.x + (int) this.width + 10;
-            startY = out.y + (int) out.height/2;
-            endY = this.y + (int) this.height/2;
-        } else if (this.x > out.x && out.y - this.y <= Math.abs(inaccuracy)) {
-            startX = out.x + (int)out.width;
-            endX = this.x - 10;
-            startY = out.y + (int) out.height/2;
-            endY = this.y + (int) this.height/2;
-        } else if (out.y > this.y && out.y - this.y <= Math.abs(inaccuracy)) {
-            startY = out.y;
-            endY = this.y + (int) this.height + 10;
-            startX = out.x + (int) out.width/2;
-            endX = this.x + (int) this.width/2;
-        } else if (this.y > out.y && out.y - this.y <= Math.abs(inaccuracy)) {
-            startY = out.y + (int) out.height;
-            endY = this.y - 10;
-            startX = out.x + (int) out.width/2;
-            endX = this.x + (int) this.width/2;
-        }
-
-        relationship.defStartX(startX)
-                .defStartY(startY)
-                .defEndX(endX)
-                .defEndY(endY)
+        relationship.defStartX(startX.get())
+                .defStartY(startY.get())
+                .defEndX(endX.get())
+                .defEndY(endY.get())
                 .draw(g2d);
+    }
+    private void calculateXYValues(AtomicInteger startX, AtomicInteger startY, AtomicInteger endX, AtomicInteger endY,
+                                   int startWidth, int startHeight, int sizeArrow, int inaccuracy) {
+        if (startX.get() > endX.get() && startY.get() - endY.get() <= Math.abs(inaccuracy)) {
+            endX.addAndGet((int) this.width + sizeArrow);
+            startY.addAndGet(startHeight/2);
+            endY.addAndGet((int) this.height/2);
+        } else if (endX.get() > startX.get() && startY.get() - endY.get() <= Math.abs(inaccuracy)) {
+            startX.addAndGet(startWidth);
+            endX.addAndGet(-sizeArrow);
+            startY.addAndGet(startHeight/2);
+            endY.addAndGet((int) this.height/2);
+        } else if (startY.get() > endY.get() && startX.get() - endX.get() <= Math.abs(inaccuracy)) {
+            endY.addAndGet((int)this.height + sizeArrow);
+            startX.addAndGet(startWidth/2);
+            endX.addAndGet((int)this.width/2);
+        } else if (endY.get() > startY.get() && startX.get() - endX.get() <= Math.abs(inaccuracy)) {
+            startY.addAndGet(startHeight);
+            endY.addAndGet(-sizeArrow);
+            startX.addAndGet(startWidth/2);
+            endX.addAndGet((int) this.width/2);
+        }
     }
 
     private int getTextWidth(String text) {

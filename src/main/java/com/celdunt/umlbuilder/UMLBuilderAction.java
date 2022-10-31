@@ -60,9 +60,6 @@ public class UMLBuilderAction extends AnAction {
                 for (PsiMethod method : ((PsiClass) classUnit).getMethods())
                     methodsArray.add("+" + method.getName() + "  " + Objects.requireNonNull(method.getReturnTypeElement()).toString().replace("PsiTypeElement", ""));
 
-                System.out.println(fieldsArray.size());
-                System.out.println(methodsArray.size());
-
                 final String className = ((PsiClass) classUnit).getName();
                 final String classType = getInActionClassType((PsiClass) classUnit);
 
@@ -75,6 +72,7 @@ public class UMLBuilderAction extends AnAction {
                         .defMethods(methodsArray));
 
                 coordX += 200;
+                coordY += 200;
 
                 fieldsArray.clear();
                 methodsArray.clear();
@@ -85,7 +83,7 @@ public class UMLBuilderAction extends AnAction {
             classItem.draw(g2d);
 
         if (classes.size() > 1)
-            classes.get(0).linkClass(classes.get(1), new UMLDependenceRelationship(), g2d);
+            classes.get(0).linkClass(classes.get(1), new UMLDependenceRelationship(10), g2d);
     }
     private Graphics2D createGraphics(BufferedImage bufferedImage, Color background, int width, int height) {
         final Graphics2D g2d = bufferedImage.createGraphics();
@@ -104,9 +102,8 @@ public class UMLBuilderAction extends AnAction {
     private VirtualFile getChooserVirtualFile(AnActionEvent event) {
         FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileDescriptor();
         Project project = getEventProject(event);
-        VirtualFile virtualFile = null;
 
-        return FileChooser.chooseFile(descriptor, project, virtualFile);
+        return FileChooser.chooseFile(descriptor, project, null);
     }
     private void saveGraphicsAsImage(BufferedImage bufferedImage, String path) {
         try {

@@ -4,8 +4,13 @@ import java.awt.*;
 
 public abstract class UMLRelationship extends UMLFigure {
 
+    public UMLRelationship(int sizeArrow) {
+        this.sizeArrow = sizeArrow;
+    }
+
     protected int endX = 0;
     protected int endY = 0;
+    protected int sizeArrow = 10;
 
     protected final Polygon upArrow = new Polygon();
     protected final Polygon downArrow = new Polygon();
@@ -21,7 +26,7 @@ public abstract class UMLRelationship extends UMLFigure {
         defineRightArrow();
         defineStrokeArrow();
 
-        final int inaccuracy = 100;
+        final int inaccuracy = 500;
 
         g2d.setColor(this.color);
 
@@ -31,6 +36,9 @@ public abstract class UMLRelationship extends UMLFigure {
 
         g2d.setStroke(new BasicStroke(1));
 
+        calculateArrowDirection(inaccuracy, g2d);
+    }
+    private void calculateArrowDirection(int inaccuracy, Graphics2D g2d) {
         if (x > endX && y - endY <= Math.abs(inaccuracy)) g2d.drawPolygon(leftArrow);
         else if (endX > x && y - endY <= Math.abs(inaccuracy)) g2d.drawPolygon(rightArrow);
         else if (y > endY && x - endX <= Math.abs(inaccuracy)) g2d.drawPolygon(upArrow);
