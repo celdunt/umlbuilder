@@ -26,77 +26,82 @@ import static com.intellij.util.ui.ImageUtil.createImage;
 
 public class UMLBuilderAction extends AnAction {
 
+    /*
+    *  1≥ определить кол-во выделенных классов
+    *  2≥ определить размер окна, согласно пункту "1≥"
+    *  3≥ отрисовать классы
+    */
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-        final int widthWindow = 1000;
-        final int heightWindow = 1000;
-
-        final VirtualFile chooserVFile = getChooserVirtualFile(e);
-
-        final BufferedImage bufferedImage = createImage(widthWindow, heightWindow, BufferedImage.TYPE_INT_RGB);
-        final Graphics2D g2d = createGraphics(bufferedImage, JBColor.white, widthWindow, heightWindow);
-
         Object[] selectedClasses = e.getRequiredData(PlatformDataKeys.SELECTED_ITEMS);
 
-        drawUML(selectedClasses, g2d);
+        ArrayList<UMLClass> umlClasses = getUMLClassesFromPsiClasses(selectedClasses);
+
+        int windowSize = umlClasses.size() * 500;
+
+        BufferedImage bufferedImage = createImage(windowSize, windowSize, BufferedImage.TYPE_INT_RGB);
+        Graphics2D g2d = createGraphics(bufferedImage, windowSize, windowSize);
+
+        drawUML(umlClasses, g2d);
+
+        VirtualFile chooserVFile = getChooserVirtualFile(e);
+
         if (chooserVFile != null) saveGraphicsAsImage(bufferedImage, chooserVFile.getPath());
     }
 
-    private void drawUML(Object[] selectedClasses, Graphics2D g2d) {
-        testDrawUML(selectedClasses, g2d);
-    }
-//    private ArrayList<String> getPsiClassFields(PsiClass classUnit, String replaceValue) {
-//        ArrayList<String> fields = new ArrayList<>();
-//        for (PsiField field : classUnit.getFields()) {
-//        }
-//    }
-    //test
-    private void testDrawUML(Object[] selectedClasses, Graphics2D g2d) {
-        ArrayList<String> fieldsArray = new ArrayList<>();
-        ArrayList<String> methodsArray = new ArrayList<>();
+    private void drawUML(ArrayList<UMLClass> umlClasses, Graphics2D g2d) {
+        int coordinateX = 50;
+        int coordinateY = 50;
 
+        for (UMLClass umlClass : umlClasses) {
+            umlClass.defX(coordinateX).defY(coordinateY).draw(g2d);
+            coordinateX += 400;
+        }
+
+        if (umlClasses.size() > 1)
+            umlClasses.get(0).linkClass(umlClasses.get(1), new UMLInheritRelationship(10, 1, 1), g2d);
+
+        //Добавить расчёт координат и свзяей!!!! ----> СРОЧНО!!!
+    }
+    private ArrayList<UMLClass> getUMLClassesFromPsiClasses(Object[] selectedClasses) {
         ArrayList<UMLClass> classes = new ArrayList<>();
 
-        int coordX = 50;
-        int coordY = 50;
+        ArrayList<String> fields;
+        ArrayList<String> methods;
 
         for (Object classUnit : selectedClasses) {
-            System.out.println(classUnit.toString());
             if (classUnit.toString().contains("PsiClass")) {
-                for (PsiField field : ((PsiClass) classUnit).getFields())
-                    fieldsArray.add("-" + field.getName() + "  " + field.getType().toString().replace("PsiType", ""));
-
-                for (PsiMethod method : ((PsiClass) classUnit).getMethods())
-                    methodsArray.add("+" + method.getName() + "  " + Objects.requireNonNull(method.getReturnTypeElement()).toString().replace("PsiTypeElement", ""));
-
-                final String className = ((PsiClass) classUnit).getName();
-                final String classType = getInActionClassType((PsiClass) classUnit);
+                fields = psiFieldsToStringArray((PsiClass) classUnit);
+                methods = psiMethodsToStringArray((PsiClass) classUnit);
 
                 classes.add(new UMLClass()
-                        .defX(coordX)
-                        .defY(coordY)
-                        .defType(classType)
-                        .defName(className)
-                        .defFields(fieldsArray)
-                        .defMethods(methodsArray));
-
-                coordX += 200;
-
-                fieldsArray.clear();
-                methodsArray.clear();
+                        .defType(getInActionClassType((PsiClass) classUnit))
+                        .defName(((PsiClass) classUnit).getName())
+                        .defFields(fields)
+                        .defMethods(methods));
             }
         }
 
-        for (UMLClass classItem : classes)
-            classItem.draw(g2d);
-
-        if (classes.size() > 1) {
-            classes.get(1).linkClass(classes.get(0), new UMLInheritRelationship(5, 1, 4), g2d);
-        }
+        return classes;
     }
-    //test
-    private Graphics2D createGraphics(BufferedImage bufferedImage, Color background, int width, int height) {
-        final Graphics2D g2d = bufferedImage.createGraphics();
+    private ArrayList<String> psiFieldsToStringArray(PsiClass classUnit) {
+        ArrayList<String> fields = new ArrayList<>();
+        for (PsiField field : classUnit.getFields()) {
+            fields.add("-" + field.getName() + "  " + field.getType().toString().replace("PsiType", ""));
+        }
+        return fields;
+    }
+    private ArrayList<String> psiMethodsToStringArray(PsiClass classUnit) {
+        ArrayList<String> methods = new ArrayList<>();
+        for (PsiMethod method : classUnit.getMethods()) {
+            methods.add("+" + method.getName() + "  " + Objects.requireNonNull(method.getReturnTypeElement()).toString().replace("PsiTypeElement", ""));
+        }
+        return methods;
+    }
+
+    private Graphics2D createGraphics(BufferedImage bufferedImage, int width, int height) {
+        Graphics2D g2d = bufferedImage.createGraphics();
+        Color background = JBColor.white;
 
         g2d.setPaint(background);
         g2d.setColor(background);

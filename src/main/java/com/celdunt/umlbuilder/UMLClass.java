@@ -18,17 +18,17 @@ public class UMLClass extends UMLFigure {
     private final String classHexCode = "#915c83";
     private final String interfaceHexCode = "#9966cc";
 
-    private int widthOval = 25;
-    private int heightOval = 25;
-    private int margin = 6;
+    private final int widthOval = 25;
+    private final int heightOval = 25;
+    private final int margin = 6;
 
     private String type = classType;
     private String name = "Default";
-    private ArrayList<String> fields = new ArrayList<>();
-    private ArrayList<String> methods = new ArrayList<>();
+    private final ArrayList<String> fields = new ArrayList<>();
+    private final ArrayList<String> methods = new ArrayList<>();
 
 
-    private final Font font = new Font("Arial", Font.PLAIN, 10);
+    private final Font font = new Font("Arial", Font.PLAIN, 12);
     private final FontRenderContext fontRenderContext = new FontRenderContext(new AffineTransform(), true, true);
 
 
@@ -130,7 +130,7 @@ public class UMLClass extends UMLFigure {
         calculateMaxSize(widthMethods, heightMethods, methods);
 
         int widthContent = Integer.max(widthFields.get(), widthMethods.get());
-        int heightContent = Integer.max(heightFields.get(), heightMethods.get());
+        int heightContent = heightFields.get() + heightMethods.get();
 
         if (getTextWidth(name) > widthContent) widthContent = getTextWidth(name) + margin;
 
@@ -168,7 +168,7 @@ public class UMLClass extends UMLFigure {
 
         drawContentClassStrings(g2d, currentY, fields);
 
-        currentY.addAndGet(margin);
+        currentY.addAndGet(2 * margin);
 
         drawContentClassStrings(g2d, currentY, methods);
     }
