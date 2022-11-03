@@ -3,8 +3,8 @@ package com.celdunt.umlbuilder;
 import java.awt.*;
 
 public class UMLDependenceRelationship extends UMLInheritRelationship {
-    public UMLDependenceRelationship(int sizeArrow) {
-        super(sizeArrow);
+    public UMLDependenceRelationship(int sizeArrow, int n, int m) {
+        super(sizeArrow, n, m);
     }
     @Override
     void defineStrokeArrow() {

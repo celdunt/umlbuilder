@@ -5,8 +5,8 @@ import com.intellij.ui.JBColor;
 import java.awt.*;
 
 public class UMLInheritRelationship extends UMLRelationship {
-    public UMLInheritRelationship(int sizeArrow) {
-        super(sizeArrow);
+    public UMLInheritRelationship(int sizeArrow, int n, int m) {
+        super(sizeArrow, n, m);
     }
 
     @Override

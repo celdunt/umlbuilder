@@ -43,6 +43,15 @@ public class UMLBuilderAction extends AnAction {
     }
 
     private void drawUML(Object[] selectedClasses, Graphics2D g2d) {
+        testDrawUML(selectedClasses, g2d);
+    }
+//    private ArrayList<String> getPsiClassFields(PsiClass classUnit, String replaceValue) {
+//        ArrayList<String> fields = new ArrayList<>();
+//        for (PsiField field : classUnit.getFields()) {
+//        }
+//    }
+    //test
+    private void testDrawUML(Object[] selectedClasses, Graphics2D g2d) {
         ArrayList<String> fieldsArray = new ArrayList<>();
         ArrayList<String> methodsArray = new ArrayList<>();
 
@@ -72,7 +81,6 @@ public class UMLBuilderAction extends AnAction {
                         .defMethods(methodsArray));
 
                 coordX += 200;
-                coordY += 200;
 
                 fieldsArray.clear();
                 methodsArray.clear();
@@ -82,9 +90,11 @@ public class UMLBuilderAction extends AnAction {
         for (UMLClass classItem : classes)
             classItem.draw(g2d);
 
-        if (classes.size() > 1)
-            classes.get(0).linkClass(classes.get(1), new UMLDependenceRelationship(10), g2d);
+        if (classes.size() > 1) {
+            classes.get(1).linkClass(classes.get(0), new UMLInheritRelationship(5, 1, 4), g2d);
+        }
     }
+    //test
     private Graphics2D createGraphics(BufferedImage bufferedImage, Color background, int width, int height) {
         final Graphics2D g2d = bufferedImage.createGraphics();
 

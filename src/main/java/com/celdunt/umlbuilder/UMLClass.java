@@ -54,45 +54,60 @@ public class UMLClass extends UMLFigure {
 
     public void linkClass(UMLClass out, UMLRelationship relationship, Graphics2D g2d) {
         int inaccuracy = 150;
-        AtomicInteger startX = new AtomicInteger(out.x);
-        AtomicInteger startY = new AtomicInteger(out.y);
-        AtomicInteger endX = new AtomicInteger(this.x);
-        AtomicInteger endY = new AtomicInteger(this.y);
 
-        //ПОЛУЧАЕТСЯ ХУЙНЯ, НЕЛОГИЧНО ------> ИСПРАВИТЬ!!!
-        calculateXYValues(startX, startY, endX, endY, (int)out.width, (int)out.height, relationship.sizeArrow, inaccuracy, relationship);
+        if (out.x > this.x && out.y - this.y <= Math.abs(inaccuracy)) initializeRelationship(out, this, relationship, UMLRelationship.ArrowDirection.LEFT);
+        else if (this.x > out.x && out.y - this.y <= Math.abs(inaccuracy)) initializeRelationship(out, this, relationship, UMLRelationship.ArrowDirection.RIGHT);
+        else if (out.y > this.y) initializeRelationship(out, this, relationship, UMLRelationship.ArrowDirection.DOWN);
+        else if (this.y > out.y) initializeRelationship(out, this, relationship, UMLRelationship.ArrowDirection.UP);
 
-        relationship.defStartX(startX.get())
-                .defStartY(startY.get())
-                .defEndX(endX.get())
-                .defEndY(endY.get())
-                .draw(g2d);
+        relationship.draw(g2d);
     }
-    private void calculateXYValues(AtomicInteger startX, AtomicInteger startY, AtomicInteger endX, AtomicInteger endY,
-                                   int startWidth, int startHeight, int sizeArrow, int inaccuracy, UMLRelationship relationship) {
-        if (startX.get() > endX.get() && startY.get() - endY.get() <= Math.abs(inaccuracy)) {
-            endX.addAndGet((int) this.width + sizeArrow);
-            startY.addAndGet(startHeight/2);
-            endY.addAndGet((int) this.height/2);
-            relationship.defArrowDirection(UMLRelationship.ArrowDirection.LEFT);
-        } else if (endX.get() > startX.get() && startY.get() - endY.get() <= Math.abs(inaccuracy)) {
-            startX.addAndGet(startWidth);
-            endX.addAndGet(-sizeArrow);
-            startY.addAndGet(startHeight/2);
-            endY.addAndGet((int) this.height/2);
-            relationship.defArrowDirection(UMLRelationship.ArrowDirection.RIGHT);
-        } else if (startY.get() > endY.get()) {
-            endY.addAndGet((int)this.height + sizeArrow);
-            startX.addAndGet(startWidth/2);
-            endX.addAndGet((int)this.width/2);
-            relationship.defArrowDirection(UMLRelationship.ArrowDirection.DOWN);
-        } else if (endY.get() > startY.get()) {
-            startY.addAndGet(startHeight);
-            endY.addAndGet(-sizeArrow);
-            startX.addAndGet(startWidth/2);
-            endX.addAndGet((int) this.width/2);
-            relationship.defArrowDirection(UMLRelationship.ArrowDirection.UP);
+    private void initializeRelationship(UMLClass first, UMLClass second, UMLRelationship relationship, UMLRelationship.ArrowDirection arrowDirection) {
+        UMLClass a = new UMLClass()
+                .defX(first.x)
+                .defY(first.y)
+                .defWidth(first.width)
+                .defHeight(first.height);
+        UMLClass b = new UMLClass()
+                .defX(second.x)
+                .defY(second.y)
+                .defWidth(second.width)
+                .defHeight(second.height);
+
+        switch (arrowDirection) {
+            case LEFT:
+                b.x += b.width + relationship.sizeArrow;
+                a.y += a.height / (relationship.m+1) * relationship.n;
+                b.y += b.height / (relationship.m+1) * relationship.n;
+                test(a, b, "LEFT");
+                break;
+            case RIGHT:
+                a.x += a.width;
+                b.x -= relationship.sizeArrow;
+                a.y += a.height / (relationship.m+1) * relationship.n;
+                b.y += b.height / (relationship.m+1) * relationship.n;
+                test(a, b, "RIGHT");
+                break;
+            case DOWN:
+                b.y += b.height + relationship.sizeArrow;
+                a.x += a.width / (relationship.m+1) * relationship.n;
+                b.x += b.width / (relationship.m+1) * relationship.n;
+                test(a, b, "DOWN");
+                break;
+            case UP:
+                a.y += a.height;
+                b.y -= relationship.sizeArrow;
+                a.x += a.width / (relationship.m+1) * relationship.n;
+                b.x += b.width / (relationship.m+1) * relationship.n;
+                test(a, b, "UP");
+                break;
         }
+
+        relationship.defStartX(a.x)
+                .defStartY(a.y)
+                .defEndX(b.x)
+                .defEndY(b.y)
+                .defArrowDirection(arrowDirection);
     }
 
     private int getTextWidth(String text) {
@@ -211,5 +226,12 @@ public class UMLClass extends UMLFigure {
     public UMLClass defMethods(ArrayList<String> methods) {
         this.methods.addAll(methods);
         return this;
+    }
+
+
+    ///test
+    private void test(UMLClass a, UMLClass b, String testMessage) {
+        System.out.println(testMessage + "\n" + a.x + " " + a.y + "<--Class A\n" +
+                b.x + " " + b.y + "<--Class B");
     }
 }

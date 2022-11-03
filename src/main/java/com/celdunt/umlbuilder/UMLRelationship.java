@@ -11,13 +11,17 @@ public abstract class UMLRelationship extends UMLFigure {
         DOWN
     }
 
-    public UMLRelationship(int sizeArrow) {
+    public UMLRelationship(int sizeArrow, int n, int m) {
         this.sizeArrow = sizeArrow;
+        this.n = n;
+        this.m = m;
     }
 
     protected int endX = 0;
     protected int endY = 0;
     protected int sizeArrow;
+    protected int n; // <--- дать нормальное название
+    protected int m; // <--- дать нормальное название
 
     protected final Polygon upArrow = new Polygon();
     protected final Polygon downArrow = new Polygon();
