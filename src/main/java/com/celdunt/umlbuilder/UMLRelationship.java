@@ -11,6 +11,12 @@ public abstract class UMLRelationship extends UMLFigure {
         DOWN
     }
 
+    public enum LinkType {
+        NONE,
+        INHERIT,
+        DEPENDENCE
+    }
+
     public UMLRelationship(int sizeArrow, int n, int m) {
         this.sizeArrow = sizeArrow;
         this.n = n;

@@ -1,5 +1,6 @@
 package com.celdunt.umlbuilder;
 
+import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.ui.JBColor;
 
 import java.awt.*;
@@ -14,18 +15,20 @@ public class UMLClass extends UMLFigure {
     public static final String classType = "C";
     public static final String interfaceType = "I";
 
-    private final String abstractHexCode = "#5d8aa8";
-    private final String classHexCode = "#915c83";
-    private final String interfaceHexCode = "#9966cc";
-
     private final int widthOval = 25;
     private final int heightOval = 25;
     private final int margin = 6;
 
     private String type = classType;
     private String name = "Default";
+    public UMLRelationship.LinkType linkType = UMLRelationship.LinkType.NONE;
     private final ArrayList<String> fields = new ArrayList<>();
     private final ArrayList<String> methods = new ArrayList<>();
+    private final ArrayList<UMLClass> parents = new ArrayList<>();
+    private final ArrayList<UMLClass> children = new ArrayList<>();
+
+    private PsiJavaCodeReferenceElement[] rawExtends;
+    private PsiJavaCodeReferenceElement[] rawImplements;
 
 
     private final Font font = new Font("Arial", Font.PLAIN, 12);
@@ -39,6 +42,10 @@ public class UMLClass extends UMLFigure {
         calculateSizeClassRectangle();
 
         g2d.drawRect(this.x, this.y, (int) this.width, (int) this.height);
+
+        String abstractHexCode = "#5d8aa8";
+        String classHexCode = "#915c83";
+        String interfaceHexCode = "#9966cc";
 
         switch (type) {
             case classType:
@@ -227,7 +234,38 @@ public class UMLClass extends UMLFigure {
         this.methods.addAll(methods);
         return this;
     }
+    public void defRawExtends(PsiJavaCodeReferenceElement[] rawExtends) {
+        this.rawExtends = rawExtends;
+    }
+    public void defRawImplements(PsiJavaCodeReferenceElement[] rawImplements) {
+        this.rawImplements = rawImplements;
+    }
 
+    public PsiJavaCodeReferenceElement[] getRawExtends() {
+        return rawExtends;
+    }
+    public PsiJavaCodeReferenceElement[] getRawImplements() {
+        return rawImplements;
+    }
+
+    public void addParent(UMLClass parent) {
+        if (parents.indexOf(parent) > 0)
+            parents.add(parent);
+    }
+    public void addChild(UMLClass child) {
+        if (children.indexOf(child) > 0)
+            children.add(child);
+    }
+
+    public ArrayList<UMLClass> getParents() {
+        return parents;
+    }
+    public ArrayList<UMLClass> getChildren() {
+        return children;
+    }
+    public String getName() {
+        return name;
+    }
 
     ///test
     private void test(UMLClass a, UMLClass b, String testMessage) {
