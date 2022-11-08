@@ -124,6 +124,9 @@ public class UMLBuilderAction extends AnAction {
                 PsiReferenceList extendsList = ((PsiClass) classUnit).getExtendsList();
                 PsiReferenceList implementsList = ((PsiClass) classUnit).getImplementsList();
 
+                if (extendsList != null)
+                    System.out.println(extendsList.getReferenceElements().length);
+
                 UMLClass added = new UMLClass();
 
                 if (extendsList != null) added.defRawExtends(extendsList.getReferenceElements());
@@ -135,7 +138,8 @@ public class UMLBuilderAction extends AnAction {
                 classes.add(added.defType(getInActionClassType((PsiClass) classUnit))
                         .defName(((PsiClass) classUnit).getName())
                         .defFields(fields)
-                        .defMethods(methods));
+                        .defMethods(methods)
+                        .calculateSizeClassRectangle());
             }
         }
 
@@ -239,8 +243,12 @@ public class UMLBuilderAction extends AnAction {
 
         for (UMLClass umlClass : umlClasses) {
             windowSize.width += umlClass.width * 2 + 100;
-            windowSize.height = Integer.max(windowSize.height, (int) umlClass.height) * 3 + 100;
+            windowSize.height = Integer.max(windowSize.height, (int) umlClass.height);
+            System.out.println(umlClass.width + "  " + umlClass.height);
+            System.out.println(windowSize.width + "  " + windowSize.height);
         }
+
+        windowSize.height = windowSize.height*3 + 200;
 
         return windowSize;
     }

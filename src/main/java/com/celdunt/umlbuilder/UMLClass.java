@@ -50,10 +50,13 @@ public class UMLClass extends UMLFigure {
         switch (type) {
             case CLASS:
                 drawTypeClassCircle(g2d, "C", classHexCode);
+                break;
             case ABSTRACT:
                 drawTypeClassCircle(g2d, "A", abstractHexCode);
+                break;
             case INTERFACE:
                 drawTypeClassCircle(g2d, "I", interfaceHexCode);
+                break;
         }
 
         drawContentClass(g2d);
@@ -125,7 +128,7 @@ public class UMLClass extends UMLFigure {
         return (int) font.getStringBounds(text, fontRenderContext).getHeight();
     }
 
-    private void calculateSizeClassRectangle() {
+    public UMLClass calculateSizeClassRectangle() {
         AtomicInteger widthFields = new AtomicInteger(0);
         AtomicInteger heightFields = new AtomicInteger(0);
 
@@ -146,6 +149,8 @@ public class UMLClass extends UMLFigure {
 
         if (heightOval + 2 * margin + getTextHeight(name) + heightContent > this.height)
             this.height = heightOval + 5 * margin + getTextHeight(name) + heightContent;
+
+        return this;
     }
 
     private void calculateMaxSize(AtomicInteger width, AtomicInteger height, ArrayList<String> listString) {
@@ -241,11 +246,11 @@ public class UMLClass extends UMLFigure {
     }
 
     public void addParent(UMLClass parent) {
-        if (parents.indexOf(parent) > 0)
+        if (!parents.contains(parent))
             parents.add(parent);
     }
     public UMLClass addChild(UMLClass child) {
-        if (children.indexOf(child) > 0)
+        if (!children.contains(child))
             children.add(child);
         return this;
     }
