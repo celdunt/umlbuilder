@@ -141,6 +141,8 @@ public class UMLBuilderAction extends AnAction {
                 .addChild(umlClasses.get(i));
 
         umlClasses.get(i).addParent(umlClass);
+
+        umlClasses.add(umlClass);
     }
     private ArrayList<String> psiFieldsToStringArray(PsiClass classUnit) {
         ArrayList<String> fields = new ArrayList<>();

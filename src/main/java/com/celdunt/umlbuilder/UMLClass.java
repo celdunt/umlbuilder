@@ -198,11 +198,6 @@ public class UMLClass extends UMLFigure {
         return this;
     }
 
-    public UMLClass defColor(Color color) {
-        this.color = color;
-        return this;
-    }
-
     public UMLClass defX(int x) {
         this.x = x;
         return this;
@@ -246,10 +241,9 @@ public class UMLClass extends UMLFigure {
         return rawImplements;
     }
 
-    public UMLClass addParent(UMLClass parent) {
+    public void addParent(UMLClass parent) {
         if (parents.indexOf(parent) > 0)
             parents.add(parent);
-        return this;
     }
     public UMLClass addChild(UMLClass child) {
         if (children.indexOf(child) > 0)
