@@ -19,16 +19,17 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.util.ui.ImageUtil.createImage;
 
 public class UMLBuilderAction extends AnAction {
 
     /*
-    *  1≥ определить кол-во выделенных классов
-    *  2≥ определить размер окна, согласно пункту "1≥"
-    *  3≥ отрисовать классы
-    */
+     *  1≥ определить кол-во выделенных классов
+     *  2≥ определить размер окна, согласно пункту "1≥"
+     *  3≥ отрисовать классы
+     */
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
         Object[] selectedClasses = e.getRequiredData(PlatformDataKeys.SELECTED_ITEMS);
@@ -37,10 +38,11 @@ public class UMLBuilderAction extends AnAction {
 
         structureUmlClasses(umlClasses);
 
-        int windowSize = umlClasses.size() * 500;
+        WindowSize windowSize = calculateWindowSize(umlClasses);
 
-        BufferedImage bufferedImage = createImage(windowSize, windowSize, BufferedImage.TYPE_INT_RGB);
-        Graphics2D g2d = createGraphics(bufferedImage, windowSize, windowSize);
+        BufferedImage bufferedImage = createImage(windowSize.width, windowSize.height, BufferedImage.TYPE_INT_RGB);
+        Graphics2D g2d = createGraphics(bufferedImage, windowSize.width, windowSize.height);
+
 
         // ≥ Нарисуем родителей
         // ≥ Нарисуем детей(тех что ещё не отрисованы на предыдущем пункте
@@ -54,19 +56,62 @@ public class UMLBuilderAction extends AnAction {
     }
 
     private void drawUML(ArrayList<UMLClass> umlClasses, Graphics2D g2d) {
-        int coordinateX = 50;
-        int coordinateY = 50;
+        AtomicInteger coordinateX = new AtomicInteger(5);
+        int coordinateY = 5;
 
-        for (UMLClass umlClass : umlClasses) {
-            umlClass.defX(coordinateX).defY(coordinateY).draw(g2d);
-            coordinateX += 400;
-        }
+        AtomicInteger maxHeightElement = new AtomicInteger(0);
 
-        if (umlClasses.size() > 1)
-            umlClasses.get(0).linkClass(umlClasses.get(1), new UMLInheritRelationship(10, 1, 1), g2d);
+        ArrayList<UMLClass> drawn = new ArrayList<>();
 
-        //Добавить расчёт координат и свзяей!!!! ----> СРОЧНО!!!
+        drawParents(umlClasses, drawn, coordinateX, coordinateY,maxHeightElement, g2d);
+
+        coordinateY += maxHeightElement.get() + 100;
+        coordinateX.set(5);
+        maxHeightElement.set(0);
+
+        drawChildren(umlClasses, drawn, coordinateX, coordinateY, maxHeightElement, g2d);
+
+        coordinateY += maxHeightElement.get() + 100;
+        coordinateX.set(5);
+
+        drawSingle(umlClasses, drawn, coordinateX, coordinateY, g2d);
     }
+
+    private void drawParents(ArrayList<UMLClass> umlClasses, ArrayList<UMLClass> drawn, AtomicInteger coordinateX, int coordinateY, AtomicInteger maxHeightElement, Graphics2D g2d) {
+        for (UMLClass umlClass : umlClasses) {
+            if (umlClass.getChildren().size() > 0) {
+                umlClass.defX(coordinateX.get()).defY(coordinateY).draw(g2d);
+                coordinateX.addAndGet((int) (umlClass.width + 100));
+                maxHeightElement.set(Integer.max(maxHeightElement.get(), (int) umlClass.height));
+                drawn.add(umlClass);
+            }
+        }
+    }
+
+    private void drawChildren(ArrayList<UMLClass> umlClasses, ArrayList<UMLClass> drawn, AtomicInteger coordinateX, int coordinateY, AtomicInteger maxHeightElement, Graphics2D g2d) {
+        for (UMLClass umlClass : umlClasses) {
+            if (umlClass.getParents().size() > 0) {
+                if (!drawn.contains(umlClass)) {
+                    umlClass.defX(coordinateX.get()).defY(coordinateY).draw(g2d);
+                    coordinateX.addAndGet((int) (umlClass.width + 100));
+                    maxHeightElement.set(Integer.max(maxHeightElement.get(), (int) umlClass.height));
+                    drawn.add(umlClass);
+                }//else прописать
+            }
+        }
+    }
+
+    private void drawSingle(ArrayList<UMLClass> umlClasses, ArrayList<UMLClass> drawn, AtomicInteger coordinateX, int coordinateY, Graphics2D g2d) {
+        for (UMLClass umlClass : umlClasses) {
+            if (umlClass.getParents().size() == 0 &&
+                    umlClass.getChildren().size() == 0) {
+                umlClass.defX(coordinateX.get()).defY(coordinateY).draw(g2d);
+                coordinateX.addAndGet((int) (umlClass.width + 100));
+                drawn.add(umlClass);
+            }
+        }
+    }
+
     private ArrayList<UMLClass> getUMLClassesFromPsiClasses(Object[] selectedClasses) {
         ArrayList<UMLClass> classes = new ArrayList<>();
 
@@ -76,8 +121,8 @@ public class UMLBuilderAction extends AnAction {
         for (Object classUnit : selectedClasses) {
             if (classUnit.toString().contains("PsiClass")) {
 
-                PsiReferenceList extendsList = ((PsiClass)classUnit).getExtendsList();
-                PsiReferenceList implementsList = ((PsiClass)classUnit).getImplementsList();
+                PsiReferenceList extendsList = ((PsiClass) classUnit).getExtendsList();
+                PsiReferenceList implementsList = ((PsiClass) classUnit).getImplementsList();
 
                 UMLClass added = new UMLClass();
 
@@ -96,17 +141,19 @@ public class UMLBuilderAction extends AnAction {
 
         return classes;
     }
+
     private void structureUmlClasses(ArrayList<UMLClass> umlClasses) {
-        for (int i = 0; i < umlClasses.size()-1; i++) {
+        for (int i = 0; i < umlClasses.size() - 1; i++) {
             defineParentsAsExtends(umlClasses, i);
             defineParentsAsImplements(umlClasses, i);
         }
     }
+
     private void defineParentsAsExtends(ArrayList<UMLClass> umlClasses, int i) {
         boolean extendsInUmlClasses = false;
-        if (umlClasses.get(i).getRawExtends().length > 0) {
+        if (umlClasses.get(i).getRawExtends() != null && umlClasses.get(i).getRawExtends().length > 0) {
             for (PsiJavaCodeReferenceElement element : umlClasses.get(i).getRawExtends()) {
-                for (int j = i+1; j < umlClasses.size(); j++) {
+                for (int j = i + 1; j < umlClasses.size(); j++) {
                     if (Objects.equals(element.getReferenceName(), umlClasses.get(j).getName())) {
                         umlClasses.get(i).addParent(umlClasses.get(j));
                         umlClasses.get(j).addChild(umlClasses.get(i));
@@ -118,11 +165,12 @@ public class UMLBuilderAction extends AnAction {
             }
         }
     }
+
     private void defineParentsAsImplements(ArrayList<UMLClass> umlClasses, int i) {
         boolean implementsInUmlClasses = false;
-        if (umlClasses.get(i).getRawImplements().length > 0) {
+        if (umlClasses.get(i).getRawImplements() != null && umlClasses.get(i).getRawImplements().length > 0) {
             for (PsiJavaCodeReferenceElement element : umlClasses.get(i).getRawImplements()) {
-                for (int j = i+1; j < umlClasses.size(); j++) {
+                for (int j = i + 1; j < umlClasses.size(); j++) {
                     if (Objects.equals(element.getReferenceName(), umlClasses.get(j).getName())) {
                         umlClasses.get(i).addParent(umlClasses.get(j));
                         umlClasses.get(j).addChild(umlClasses.get(i));
@@ -134,6 +182,7 @@ public class UMLBuilderAction extends AnAction {
             }
         }
     }
+
     private void defineUnknownClass(ArrayList<UMLClass> umlClasses, UMLClass.ClassType umlType, PsiJavaCodeReferenceElement element, int i) {
         UMLClass umlClass = new UMLClass()
                 .defName(element.getReferenceName())
@@ -144,6 +193,7 @@ public class UMLBuilderAction extends AnAction {
 
         umlClasses.add(umlClass);
     }
+
     private ArrayList<String> psiFieldsToStringArray(PsiClass classUnit) {
         ArrayList<String> fields = new ArrayList<>();
         for (PsiField field : classUnit.getFields()) {
@@ -151,10 +201,11 @@ public class UMLBuilderAction extends AnAction {
         }
         return fields;
     }
+
     private ArrayList<String> psiMethodsToStringArray(PsiClass classUnit) {
         ArrayList<String> methods = new ArrayList<>();
         for (PsiMethod method : classUnit.getMethods()) {
-            methods.add("+" + method.getName() + "  " + (method.getReturnTypeElement() == null? "constructor": method.getReturnTypeElement().toString().replace("PsiTypeElement", "")));
+            methods.add("+" + method.getName() + "  " + (method.getReturnTypeElement() == null ? "constructor" : method.getReturnTypeElement().toString().replace("PsiTypeElement", "")));
         }
         return methods;
     }
@@ -169,17 +220,31 @@ public class UMLBuilderAction extends AnAction {
 
         return g2d;
     }
+
     private UMLClass.ClassType getInActionClassType(PsiClass item) {
-        return item.isInterface()? UMLClass.ClassType.INTERFACE:
-                Objects.requireNonNull(item.getModifierList()).toString().contains("abstract")? UMLClass.ClassType.ABSTRACT:
+        return item.isInterface() ? UMLClass.ClassType.INTERFACE :
+                Objects.requireNonNull(item.getModifierList()).toString().contains("abstract") ? UMLClass.ClassType.ABSTRACT :
                         UMLClass.ClassType.CLASS;
     }
+
     private VirtualFile getChooserVirtualFile(AnActionEvent event) {
         FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileDescriptor();
         Project project = getEventProject(event);
 
         return FileChooser.chooseFile(descriptor, project, null);
     }
+
+    private WindowSize calculateWindowSize(ArrayList<UMLClass> umlClasses) {
+        WindowSize windowSize = new WindowSize();
+
+        for (UMLClass umlClass : umlClasses) {
+            windowSize.width += umlClass.width * 2 + 100;
+            windowSize.height = Integer.max(windowSize.height, (int) umlClass.height) * 3 + 100;
+        }
+
+        return windowSize;
+    }
+
     private void saveGraphicsAsImage(BufferedImage bufferedImage, String path) {
         try {
             ImageIO.write(bufferedImage, "png", new File(path + "/image.png"));
