@@ -11,15 +11,16 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class UMLClass extends UMLFigure {
-    public static final String abstractType = "A";
-    public static final String classType = "C";
-    public static final String interfaceType = "I";
-
+    public enum ClassType {
+        CLASS,
+        ABSTRACT,
+        INTERFACE
+    }
     private final int widthOval = 25;
     private final int heightOval = 25;
     private final int margin = 6;
 
-    private String type = classType;
+    private ClassType type = ClassType.CLASS;
     private String name = "Default";
     public UMLRelationship.LinkType linkType = UMLRelationship.LinkType.NONE;
     private final ArrayList<String> fields = new ArrayList<>();
@@ -48,12 +49,12 @@ public class UMLClass extends UMLFigure {
         String interfaceHexCode = "#9966cc";
 
         switch (type) {
-            case classType:
-                drawTypeClassCircle(g2d, type, classHexCode);
-            case abstractType:
-                drawTypeClassCircle(g2d, type, abstractHexCode);
-            case interfaceType:
-                drawTypeClassCircle(g2d, type, interfaceHexCode);
+            case CLASS:
+                drawTypeClassCircle(g2d, "C", classHexCode);
+            case ABSTRACT:
+                drawTypeClassCircle(g2d, "A", abstractHexCode);
+            case INTERFACE:
+                drawTypeClassCircle(g2d, "I", interfaceHexCode);
         }
 
         drawContentClass(g2d);
@@ -212,11 +213,8 @@ public class UMLClass extends UMLFigure {
         return this;
     }
 
-    public UMLClass defType(String type) {
-        if (Objects.equals(type, UMLClass.classType) ||
-                Objects.equals(type, UMLClass.abstractType) ||
-                Objects.equals(type, UMLClass.interfaceType))
-            this.type = type;
+    public UMLClass defType(ClassType type) {
+        this.type = type;
         return this;
     }
 
@@ -248,13 +246,15 @@ public class UMLClass extends UMLFigure {
         return rawImplements;
     }
 
-    public void addParent(UMLClass parent) {
+    public UMLClass addParent(UMLClass parent) {
         if (parents.indexOf(parent) > 0)
             parents.add(parent);
+        return this;
     }
-    public void addChild(UMLClass child) {
+    public UMLClass addChild(UMLClass child) {
         if (children.indexOf(child) > 0)
             children.add(child);
+        return this;
     }
 
     public ArrayList<UMLClass> getParents() {

@@ -103,6 +103,7 @@ public class UMLBuilderAction extends AnAction {
         }
     }
     private void defineParentsAsExtends(ArrayList<UMLClass> umlClasses, int i) {
+        boolean extendsInUmlClasses = false;
         if (umlClasses.get(i).getRawExtends().length > 0) {
             for (PsiJavaCodeReferenceElement element : umlClasses.get(i).getRawExtends()) {
                 for (int j = i+1; j < umlClasses.size(); j++) {
@@ -110,12 +111,15 @@ public class UMLBuilderAction extends AnAction {
                         umlClasses.get(i).addParent(umlClasses.get(j));
                         umlClasses.get(j).addChild(umlClasses.get(i));
                         umlClasses.get(j).linkType = UMLRelationship.LinkType.INHERIT;
+                        extendsInUmlClasses = true;
                     }
                 }
+                if (!extendsInUmlClasses) defineUnknownClass(umlClasses, UMLClass.ClassType.CLASS, element, i);
             }
         }
     }
     private void defineParentsAsImplements(ArrayList<UMLClass> umlClasses, int i) {
+        boolean implementsInUmlClasses = false;
         if (umlClasses.get(i).getRawImplements().length > 0) {
             for (PsiJavaCodeReferenceElement element : umlClasses.get(i).getRawImplements()) {
                 for (int j = i+1; j < umlClasses.size(); j++) {
@@ -123,10 +127,20 @@ public class UMLBuilderAction extends AnAction {
                         umlClasses.get(i).addParent(umlClasses.get(j));
                         umlClasses.get(j).addChild(umlClasses.get(i));
                         umlClasses.get(j).linkType = UMLRelationship.LinkType.DEPENDENCE;
+                        implementsInUmlClasses = true;
                     }
                 }
+                if (!implementsInUmlClasses) defineUnknownClass(umlClasses, UMLClass.ClassType.INTERFACE, element, i);
             }
         }
+    }
+    private void defineUnknownClass(ArrayList<UMLClass> umlClasses, UMLClass.ClassType umlType, PsiJavaCodeReferenceElement element, int i) {
+        UMLClass umlClass = new UMLClass()
+                .defName(element.getReferenceName())
+                .defType(umlType)
+                .addChild(umlClasses.get(i));
+
+        umlClasses.get(i).addParent(umlClass);
     }
     private ArrayList<String> psiFieldsToStringArray(PsiClass classUnit) {
         ArrayList<String> fields = new ArrayList<>();
@@ -153,10 +167,10 @@ public class UMLBuilderAction extends AnAction {
 
         return g2d;
     }
-    private String getInActionClassType(PsiClass item) {
-        return item.isInterface()? UMLClass.interfaceType:
-                Objects.requireNonNull(item.getModifierList()).toString().contains("abstract")? UMLClass.abstractType:
-                        UMLClass.classType;
+    private UMLClass.ClassType getInActionClassType(PsiClass item) {
+        return item.isInterface()? UMLClass.ClassType.INTERFACE:
+                Objects.requireNonNull(item.getModifierList()).toString().contains("abstract")? UMLClass.ClassType.ABSTRACT:
+                        UMLClass.ClassType.CLASS;
     }
     private VirtualFile getChooserVirtualFile(AnActionEvent event) {
         FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileDescriptor();
