@@ -13,7 +13,8 @@ public class UMLClass extends UMLFigure {
     public enum ClassType {
         CLASS,
         ABSTRACT,
-        INTERFACE
+        INTERFACE,
+        ENUM
     }
     private final int widthOval = 25;
     private final int heightOval = 25;
@@ -46,6 +47,7 @@ public class UMLClass extends UMLFigure {
         String abstractHexCode = "#5d8aa8";
         String classHexCode = "#915c83";
         String interfaceHexCode = "#9966cc";
+        String enumHexCode = "#9855cc";
 
         switch (type) {
             case CLASS:
@@ -57,6 +59,8 @@ public class UMLClass extends UMLFigure {
             case INTERFACE:
                 drawTypeClassCircle(g2d, "I", interfaceHexCode);
                 break;
+            case ENUM:
+                drawTypeClassCircle(g2d, "@e", enumHexCode);
         }
 
         drawContentClass(g2d);
@@ -183,6 +187,14 @@ public class UMLClass extends UMLFigure {
         currentY.addAndGet(2 * margin);
 
         drawContentClassStrings(g2d, currentY, methods);
+    }
+
+    public UMLRelationship getLinkClass(int sizeArrow, int n, int m) {
+        switch (this.linkType) {
+            case INHERIT: return new UMLInheritRelationship(sizeArrow, n, m);
+            case DEPENDENCE: return new UMLDependenceRelationship(sizeArrow, n, m);
+            default: return new UMLInheritRelationship(0, 0, 0);
+        }
     }
 
     private void drawContentClassStrings(Graphics2D g2d, AtomicInteger currentY, ArrayList<String> listString) {

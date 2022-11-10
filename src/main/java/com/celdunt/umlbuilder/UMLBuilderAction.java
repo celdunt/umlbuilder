@@ -24,12 +24,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static com.intellij.util.ui.ImageUtil.createImage;
 
 public class UMLBuilderAction extends AnAction {
-
-    /*
-     *  1≥ определить кол-во выделенных классов
-     *  2≥ определить размер окна, согласно пункту "1≥"
-     *  3≥ отрисовать классы
-     */
+    //РАЗОБРАТЬСЯ С ВЛОЖЕННЫМИ КЛАССАМИ
+    //РАЗОЮРАТЬСЯ С ПЕРЕСЕЧЕНИЯМИ СТРЕЛОК
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
         Object[] selectedClasses = e.getRequiredData(PlatformDataKeys.SELECTED_ITEMS);
@@ -43,21 +39,19 @@ public class UMLBuilderAction extends AnAction {
         BufferedImage bufferedImage = createImage(windowSize.width, windowSize.height, BufferedImage.TYPE_INT_RGB);
         Graphics2D g2d = createGraphics(bufferedImage, windowSize.width, windowSize.height);
 
-
-        // ≥ Нарисуем родителей
-        // ≥ Нарисуем детей(тех что ещё не отрисованы на предыдущем пункте
-        // ≥ Нарисуем стрело4ки
-
-        drawUML(umlClasses, g2d);
+        drawUML(umlClasses, g2d, windowSize);
 
         VirtualFile chooserVFile = getChooserVirtualFile(e);
 
-        if (chooserVFile != null) saveGraphicsAsImage(bufferedImage, chooserVFile.getPath());
+        BufferedImage resultBufferedImage = bufferedImage.getSubimage(0, 0, windowSize.width, windowSize.height);
+
+        if (chooserVFile != null) saveGraphicsAsImage(resultBufferedImage, chooserVFile.getPath());
     }
 
-    private void drawUML(ArrayList<UMLClass> umlClasses, Graphics2D g2d) {
+    private void drawUML(ArrayList<UMLClass> umlClasses, Graphics2D g2d, WindowSize newSize) {
         AtomicInteger coordinateX = new AtomicInteger(5);
         int coordinateY = 5;
+        int maxWidth = 0;
 
         AtomicInteger maxHeightElement = new AtomicInteger(0);
 
@@ -66,15 +60,26 @@ public class UMLBuilderAction extends AnAction {
         drawParents(umlClasses, drawn, coordinateX, coordinateY,maxHeightElement, g2d);
 
         coordinateY += maxHeightElement.get() + 100;
+        maxWidth = Integer.max(coordinateX.get(), maxWidth);
         coordinateX.set(5);
         maxHeightElement.set(0);
 
         drawChildren(umlClasses, drawn, coordinateX, coordinateY, maxHeightElement, g2d);
 
         coordinateY += maxHeightElement.get() + 100;
+        maxHeightElement.set(0);
+        maxWidth = Integer.max(coordinateX.get(), maxWidth);
         coordinateX.set(5);
 
-        drawSingle(umlClasses, drawn, coordinateX, coordinateY, g2d);
+        drawSingle(umlClasses, drawn, coordinateX, coordinateY, maxHeightElement, g2d);
+
+        newSize.width = maxWidth;
+        newSize.height = coordinateY + maxHeightElement.get();
+
+        for (UMLClass umlClass : umlClasses) {
+            for (int i = 0; i < umlClass.getChildren().size(); i++)
+                umlClass.linkClass(umlClass.getChildren().get(i), umlClass.getLinkClass(10, i+1, umlClass.getChildren().size()), g2d);
+        }
     }
 
     private void drawParents(ArrayList<UMLClass> umlClasses, ArrayList<UMLClass> drawn, AtomicInteger coordinateX, int coordinateY, AtomicInteger maxHeightElement, Graphics2D g2d) {
@@ -96,17 +101,18 @@ public class UMLBuilderAction extends AnAction {
                     coordinateX.addAndGet((int) (umlClass.width + 100));
                     maxHeightElement.set(Integer.max(maxHeightElement.get(), (int) umlClass.height));
                     drawn.add(umlClass);
-                }//else прописать
+                }
             }
         }
     }
 
-    private void drawSingle(ArrayList<UMLClass> umlClasses, ArrayList<UMLClass> drawn, AtomicInteger coordinateX, int coordinateY, Graphics2D g2d) {
+    private void drawSingle(ArrayList<UMLClass> umlClasses, ArrayList<UMLClass> drawn, AtomicInteger coordinateX, int coordinateY, AtomicInteger maxHeightElement, Graphics2D g2d) {
         for (UMLClass umlClass : umlClasses) {
             if (umlClass.getParents().size() == 0 &&
                     umlClass.getChildren().size() == 0) {
                 umlClass.defX(coordinateX.get()).defY(coordinateY).draw(g2d);
                 coordinateX.addAndGet((int) (umlClass.width + 100));
+                maxHeightElement.set(Integer.max(maxHeightElement.get(), (int) umlClass.height));
                 drawn.add(umlClass);
             }
         }
@@ -147,7 +153,7 @@ public class UMLBuilderAction extends AnAction {
     }
 
     private void structureUmlClasses(ArrayList<UMLClass> umlClasses) {
-        for (int i = 0; i < umlClasses.size() - 1; i++) {
+        for (int i = 0; i < umlClasses.size(); i++) {
             defineParentsAsExtends(umlClasses, i);
             defineParentsAsImplements(umlClasses, i);
         }
@@ -157,8 +163,8 @@ public class UMLBuilderAction extends AnAction {
         boolean extendsInUmlClasses = false;
         if (umlClasses.get(i).getRawExtends() != null && umlClasses.get(i).getRawExtends().length > 0) {
             for (PsiJavaCodeReferenceElement element : umlClasses.get(i).getRawExtends()) {
-                for (int j = i + 1; j < umlClasses.size(); j++) {
-                    if (Objects.equals(element.getReferenceName(), umlClasses.get(j).getName())) {
+                for (int j = 0; j < umlClasses.size(); j++) {
+                    if (j != i && Objects.equals(element.getReferenceName(), umlClasses.get(j).getName())) {
                         umlClasses.get(i).addParent(umlClasses.get(j));
                         umlClasses.get(j).addChild(umlClasses.get(i));
                         umlClasses.get(j).linkType = UMLRelationship.LinkType.INHERIT;
@@ -174,8 +180,8 @@ public class UMLBuilderAction extends AnAction {
         boolean implementsInUmlClasses = false;
         if (umlClasses.get(i).getRawImplements() != null && umlClasses.get(i).getRawImplements().length > 0) {
             for (PsiJavaCodeReferenceElement element : umlClasses.get(i).getRawImplements()) {
-                for (int j = i + 1; j < umlClasses.size(); j++) {
-                    if (Objects.equals(element.getReferenceName(), umlClasses.get(j).getName())) {
+                for (int j = 0; j < umlClasses.size(); j++) {
+                    if (j != i && Objects.equals(element.getReferenceName(), umlClasses.get(j).getName())) {
                         umlClasses.get(i).addParent(umlClasses.get(j));
                         umlClasses.get(j).addChild(umlClasses.get(i));
                         umlClasses.get(j).linkType = UMLRelationship.LinkType.DEPENDENCE;
@@ -193,6 +199,7 @@ public class UMLBuilderAction extends AnAction {
                 .defType(umlType)
                 .addChild(umlClasses.get(i));
 
+        umlClass.linkType = UMLRelationship.LinkType.INHERIT;
         umlClasses.get(i).addParent(umlClass);
 
         umlClasses.add(umlClass);
@@ -228,7 +235,7 @@ public class UMLBuilderAction extends AnAction {
     private UMLClass.ClassType getInActionClassType(PsiClass item) {
         return item.isInterface() ? UMLClass.ClassType.INTERFACE :
                 Objects.requireNonNull(item.getModifierList()).toString().contains("abstract") ? UMLClass.ClassType.ABSTRACT :
-                        UMLClass.ClassType.CLASS;
+                        item.isEnum() ? UMLClass.ClassType.ENUM: UMLClass.ClassType.CLASS;
     }
 
     private VirtualFile getChooserVirtualFile(AnActionEvent event) {
@@ -242,13 +249,11 @@ public class UMLBuilderAction extends AnAction {
         WindowSize windowSize = new WindowSize();
 
         for (UMLClass umlClass : umlClasses) {
-            windowSize.width += umlClass.width * 2 + 100;
+            windowSize.width += umlClass.width + 100;
             windowSize.height = Integer.max(windowSize.height, (int) umlClass.height);
-            System.out.println(umlClass.width + "  " + umlClass.height);
-            System.out.println(windowSize.width + "  " + windowSize.height);
         }
 
-        windowSize.height = windowSize.height*3 + 200;
+        windowSize.height = windowSize.height*2 + 200;
 
         return windowSize;
     }
