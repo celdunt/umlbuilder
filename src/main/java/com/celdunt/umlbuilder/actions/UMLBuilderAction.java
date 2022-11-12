@@ -80,12 +80,7 @@ public class UMLBuilderAction extends AnAction {
         newSize.width = maxWidth;
         newSize.height = coordinateY + maxHeightElement.get();
 
-        for (UMLClass umlClass : umlClasses) {
-            for (int i = 0; i < umlClass.getChildren().size(); i++)
-                umlClass.linkClass(umlClass.getChildren().get(i), umlClass.getChildren().get(i).getLinkClass(10, i+1, umlClass.getChildren().size()), g2d);
-            for (int i = 0; i < umlClass.getInners().size(); i++)
-                umlClass.linkClass(umlClass.getInners().get(i), umlClass.getInners().get(i).getLinkClass(10, i+1, umlClass.getInners().size()), g2d);
-        }
+        drawRelations(umlClasses, g2d);
     }
 
     private void drawParents(ArrayList<UMLClass> umlClasses, ArrayList<UMLClass> drawn, AtomicInteger coordinateX, int coordinateY, AtomicInteger maxHeightElement, Graphics2D g2d) {
@@ -133,6 +128,16 @@ public class UMLBuilderAction extends AnAction {
                 maxHeightElement.set(Integer.max(maxHeightElement.get(), (int) umlClass.getHeight()));
                 drawn.add(umlClass);
             }
+        }
+    }
+    private void drawRelations(ArrayList<UMLClass> umlClasses, Graphics2D g2d) {
+        for (UMLClass umlClass : umlClasses) {
+            int numerator = 1;
+            int denominator = umlClass.getChildren().size() + umlClass.getInners().size();
+            for (int i = 0; i < umlClass.getChildren().size(); i++)
+                umlClass.linkClass(umlClass.getChildren().get(i), umlClass.getChildren().get(i).getLinkClass(10, numerator++, denominator), g2d);
+            for (int i = 0; i < umlClass.getInners().size(); i++)
+                umlClass.linkClass(umlClass.getInners().get(i), umlClass.getInners().get(i).getLinkClass(10, numerator++, denominator), g2d);
         }
     }
 
