@@ -1,4 +1,7 @@
-package com.celdunt.umlbuilder;
+package com.celdunt.umlbuilder.relationships;
+
+import com.celdunt.umlbuilder.figures.UMLFigure;
+import com.intellij.ui.JBColor;
 
 import java.awt.*;
 
@@ -14,20 +17,21 @@ public abstract class UMLRelationship extends UMLFigure {
     public enum LinkType {
         NONE,
         INHERIT,
-        DEPENDENCE
+        DEPENDENCE,
+        INNER
     }
 
-    public UMLRelationship(int sizeArrow, int n, int m) {
+    public UMLRelationship(int sizeArrow, int numeratorOfRelations, int denominatorOfRelations) {
         this.sizeArrow = sizeArrow;
-        this.n = n;
-        this.m = m;
+        this.numeratorOfRelations = numeratorOfRelations;
+        this.denominatorOfRelations = denominatorOfRelations;
     }
 
     protected int endX = 0;
     protected int endY = 0;
     protected int sizeArrow;
-    protected int n; // <--- дать нормальное название
-    protected int m; // <--- дать нормальное название
+    protected int numeratorOfRelations;
+    protected int denominatorOfRelations;
 
     protected final Polygon upArrow = new Polygon();
     protected final Polygon downArrow = new Polygon();
@@ -44,7 +48,7 @@ public abstract class UMLRelationship extends UMLFigure {
         defineRightArrow();
         defineStrokeArrow();
 
-        g2d.setColor(this.color);
+        g2d.setColor(JBColor.black);
 
         g2d.setStroke(strokeArrow);
 
@@ -85,8 +89,16 @@ public abstract class UMLRelationship extends UMLFigure {
         this.endY = endY;
         return this;
     }
-    public UMLRelationship defArrowDirection(ArrowDirection arrowDirection) {
+    public void defArrowDirection(ArrowDirection arrowDirection) {
         this.arrowDirection = arrowDirection;
-        return this;
+    }
+    public int getNumeratorOfRelations() {
+        return numeratorOfRelations;
+    }
+    public int getDenominatorOfRelations() {
+        return denominatorOfRelations;
+    }
+    public int getSizeArrow() {
+        return sizeArrow;
     }
 }

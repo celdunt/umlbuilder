@@ -1,6 +1,4 @@
-package com.celdunt.umlbuilder;
-
-import com.intellij.ui.JBColor;
+package com.celdunt.umlbuilder.relationships;
 
 import java.awt.*;
 

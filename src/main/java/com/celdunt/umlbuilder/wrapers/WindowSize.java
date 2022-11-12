@@ -1,4 +1,4 @@
-package com.celdunt.umlbuilder;
+package com.celdunt.umlbuilder.wrapers;
 
 public class WindowSize {
     public int width = 0;

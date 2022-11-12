@@ -25,7 +25,7 @@
 
     </extensions>
     <actions>
-        <action id="com.celdunt.umlbuilder.UMLBuilderAction" class="com.celdunt.umlbuilder.UMLBuilderAction"
+        <action id="com.celdunt.umlbuilder.actions.UMLBuilderAction" class="com.celdunt.umlbuilder.actions.UMLBuilderAction"
                 text="UMLBuild">
             <keyboard-shortcut keymap="$default" first-keystroke="alt B" second-keystroke="alt D"/>
         </action>

@@ -1,4 +1,4 @@
-package com.celdunt.umlbuilder;
+package com.celdunt.umlbuilder.relationships;
 
 import java.awt.*;
 

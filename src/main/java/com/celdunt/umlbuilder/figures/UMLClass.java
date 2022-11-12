@@ -1,5 +1,10 @@
-package com.celdunt.umlbuilder;
+package com.celdunt.umlbuilder.figures;
 
+import com.celdunt.umlbuilder.relationships.UMLDependenceRelationship;
+import com.celdunt.umlbuilder.relationships.UMLInheritRelationship;
+import com.celdunt.umlbuilder.relationships.UMLInnerRelationship;
+import com.celdunt.umlbuilder.relationships.UMLRelationship;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.ui.JBColor;
 
@@ -27,9 +32,11 @@ public class UMLClass extends UMLFigure {
     private final ArrayList<String> methods = new ArrayList<>();
     private final ArrayList<UMLClass> parents = new ArrayList<>();
     private final ArrayList<UMLClass> children = new ArrayList<>();
+    private final ArrayList<UMLClass> inners = new ArrayList<>();
 
     private PsiJavaCodeReferenceElement[] rawExtends;
     private PsiJavaCodeReferenceElement[] rawImplements;
+    private PsiClass[] rawInners;
 
 
     private final Font font = new Font("Arial", Font.PLAIN, 12);
@@ -90,29 +97,29 @@ public class UMLClass extends UMLFigure {
 
         switch (arrowDirection) {
             case LEFT:
-                b.x += b.width + relationship.sizeArrow;
-                a.y += a.height / (relationship.m+1) * relationship.n;
-                b.y += b.height / (relationship.m+1) * relationship.n;
+                b.x += b.width + relationship.getSizeArrow();
+                a.y += a.height / (relationship.getDenominatorOfRelations() +1) * relationship.getNumeratorOfRelations();
+                b.y += b.height / (relationship.getDenominatorOfRelations() +1) * relationship.getNumeratorOfRelations();
                 test(a, b, "LEFT");
                 break;
             case RIGHT:
                 a.x += a.width;
-                b.x -= relationship.sizeArrow;
-                a.y += a.height / (relationship.m+1) * relationship.n;
-                b.y += b.height / (relationship.m+1) * relationship.n;
+                b.x -= relationship.getSizeArrow();
+                a.y += a.height / (relationship.getDenominatorOfRelations() +1) * relationship.getNumeratorOfRelations();
+                b.y += b.height / (relationship.getDenominatorOfRelations() +1) * relationship.getNumeratorOfRelations();
                 test(a, b, "RIGHT");
                 break;
             case DOWN:
-                b.y += b.height + relationship.sizeArrow;
-                a.x += a.width / (relationship.m+1) * relationship.n;
-                b.x += b.width / (relationship.m+1) * relationship.n;
+                b.y += b.height + relationship.getSizeArrow();
+                a.x += a.width / (relationship.getDenominatorOfRelations() +1) * relationship.getNumeratorOfRelations();
+                b.x += b.width / (relationship.getDenominatorOfRelations() +1) * relationship.getNumeratorOfRelations();
                 test(a, b, "DOWN");
                 break;
             case UP:
                 a.y += a.height;
-                b.y -= relationship.sizeArrow;
-                a.x += a.width / (relationship.m+1) * relationship.n;
-                b.x += b.width / (relationship.m+1) * relationship.n;
+                b.y -= relationship.getSizeArrow();
+                a.x += a.width / (relationship.getDenominatorOfRelations() +1) * relationship.getNumeratorOfRelations();
+                b.x += b.width / (relationship.getDenominatorOfRelations() +1) * relationship.getNumeratorOfRelations();
                 test(a, b, "UP");
                 break;
         }
@@ -193,6 +200,7 @@ public class UMLClass extends UMLFigure {
         switch (this.linkType) {
             case INHERIT: return new UMLInheritRelationship(sizeArrow, n, m);
             case DEPENDENCE: return new UMLDependenceRelationship(sizeArrow, n, m);
+            case INNER: return new UMLInnerRelationship(sizeArrow, n, m);
             default: return new UMLInheritRelationship(0, 0, 0);
         }
     }
@@ -249,12 +257,18 @@ public class UMLClass extends UMLFigure {
     public void defRawImplements(PsiJavaCodeReferenceElement[] rawImplements) {
         this.rawImplements = rawImplements;
     }
+    public void defRawInners(PsiClass[] rawInners) {
+        this.rawInners = rawInners;
+    }
 
     public PsiJavaCodeReferenceElement[] getRawExtends() {
         return rawExtends;
     }
     public PsiJavaCodeReferenceElement[] getRawImplements() {
         return rawImplements;
+    }
+    public PsiClass[] getRawInners() {
+        return rawInners;
     }
 
     public void addParent(UMLClass parent) {
@@ -266,12 +280,18 @@ public class UMLClass extends UMLFigure {
             children.add(child);
         return this;
     }
+    public void addInner(UMLClass inner) {
+        this.inners.add(inner);
+    }
 
     public ArrayList<UMLClass> getParents() {
         return parents;
     }
     public ArrayList<UMLClass> getChildren() {
         return children;
+    }
+    public ArrayList<UMLClass> getInners() {
+        return inners;
     }
     public String getName() {
         return name;
