@@ -27,7 +27,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static com.intellij.util.ui.ImageUtil.createImage;
 
 public class UMLBuilderAction extends AnAction {
-    //РАЗОБРАТЬСЯ С ПЕРЕСЕЧЕНИЯМИ СТРЕЛОК
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
         Object[] selectedClasses = e.getRequiredData(PlatformDataKeys.SELECTED_ITEMS);
@@ -59,31 +58,25 @@ public class UMLBuilderAction extends AnAction {
 
         ArrayList<UMLClass> drawn = new ArrayList<>();
 
-        drawParents(umlClasses, drawn, coordinateX, coordinateY,maxHeightElement, g2d);
+        drawParents(umlClasses, drawn, coordinateX, coordinateY, maxHeightElement, g2d);
 
         coordinateY += maxHeightElement.get() + 100;
         maxWidth = Integer.max(coordinateX.get(), maxWidth);
         coordinateX.set(5);
         maxHeightElement.set(0);
 
-        drawChildren(umlClasses, drawn, coordinateX, coordinateY, maxHeightElement, g2d);
+        drawOther(umlClasses, drawn, coordinateX, coordinateY, maxHeightElement, g2d);
 
-        drawInners(umlClasses, coordinateX, coordinateY, maxHeightElement, g2d);
-
-        coordinateY += maxHeightElement.get() + 100;
-        maxHeightElement.set(0);
         maxWidth = Integer.max(coordinateX.get(), maxWidth);
-        coordinateX.set(5);
-
-        drawSingle(umlClasses, drawn, coordinateX, coordinateY, maxHeightElement, g2d);
 
         newSize.width = maxWidth;
-        newSize.height = coordinateY + maxHeightElement.get();
+        newSize.height = maxHeightElement.get() + 10;
 
         drawRelations(umlClasses, g2d);
     }
 
-    private void drawParents(ArrayList<UMLClass> umlClasses, ArrayList<UMLClass> drawn, AtomicInteger coordinateX, int coordinateY, AtomicInteger maxHeightElement, Graphics2D g2d) {
+    private void drawParents(ArrayList<UMLClass> umlClasses, ArrayList<UMLClass> drawn, AtomicInteger coordinateX, int coordinateY,
+                             AtomicInteger maxHeightElement, Graphics2D g2d) {
         for (UMLClass umlClass : umlClasses) {
             if (umlClass.getChildren().size() > 0) {
                 umlClass.defX(coordinateX.get()).defY(coordinateY).draw(g2d);
@@ -94,39 +87,50 @@ public class UMLBuilderAction extends AnAction {
         }
     }
 
-    private void drawChildren(ArrayList<UMLClass> umlClasses, ArrayList<UMLClass> drawn, AtomicInteger coordinateX, int coordinateY, AtomicInteger maxHeightElement, Graphics2D g2d) {
-        for (UMLClass umlClass : umlClasses) {
-            if (umlClass.getParents().size() > 0) {
-                if (!drawn.contains(umlClass)) {
-                    umlClass.defX(coordinateX.get()).defY(coordinateY).draw(g2d);
-                    coordinateX.addAndGet((int) (umlClass.getWidth() + 100));
-                    maxHeightElement.set(Integer.max(maxHeightElement.get(), (int) umlClass.getHeight()));
-                    drawn.add(umlClass);
+    private void drawOther(ArrayList<UMLClass> umlClasses, ArrayList<UMLClass> drawn, AtomicInteger coordinateX, int coordinateY,
+                           AtomicInteger maxHeightElement, Graphics2D g2d) {
+        ArrayList<UMLClass> forAddition = new ArrayList<>();
+        ArrayList<UMLClass> drawnInners = new ArrayList<>();
+        AtomicInteger innerCoordinateX = new AtomicInteger(5);
+        int innerCoordinateY = coordinateY + maxHeightElement.get();
+        for (UMLClass umlClass : drawn) {
+            for (UMLClass children : umlClass.getChildren())
+                if (!drawn.contains(children)) {
+                    children.defX(coordinateX.get()).defY(coordinateY).draw(g2d);
+                    coordinateX.addAndGet((int) (children.getWidth() + 100));
+                    maxHeightElement.set(Integer.max(maxHeightElement.get(), (int) children.getHeight()));
+                    forAddition.add(children);
+                    innerCoordinateY = coordinateY + maxHeightElement.get() + 200;
+                    drawInners(children.getInners(), drawnInners, innerCoordinateX, innerCoordinateY, maxHeightElement, g2d);
                 }
-            }
+            drawInners(umlClass.getInners(), drawnInners, coordinateX, coordinateY, maxHeightElement, g2d);
         }
+        drawn.addAll(forAddition);
+        maxHeightElement.set(0);
+        drawSingle(umlClasses, innerCoordinateX, innerCoordinateY, maxHeightElement, g2d);
+        maxHeightElement.addAndGet(innerCoordinateY);
     }
 
-    private void drawInners(ArrayList<UMLClass> umlClasses, AtomicInteger coordinateX, int coordinateY, AtomicInteger maxHeightElement, Graphics2D g2d) {
-        for (UMLClass umlClass : umlClasses) {
-            if (umlClass.getInners().size() > 0) {
-                for (UMLClass inner : umlClass.getInners()) {
-                    inner.defX(coordinateX.get()).defY(coordinateY).draw(g2d);
-                    coordinateX.addAndGet((int)(inner.getWidth() + 100));
-                    maxHeightElement.set(Integer.max(maxHeightElement.get(), (int)inner.getHeight()));
-                }
+    private void drawInners(ArrayList<UMLClass> umlInners, ArrayList<UMLClass> drawn, AtomicInteger coordinateX, int coordinateY,
+                            AtomicInteger maxHeightElement, Graphics2D g2d) {
+        ArrayList<UMLClass> forAddition = new ArrayList<>();
+        for (UMLClass inner : umlInners)
+            if (!drawn.contains(inner)) {
+                inner.defX(coordinateX.get()).defY(coordinateY).draw(g2d);
+                coordinateX.addAndGet((int) (inner.getWidth() + 100));
+                maxHeightElement.set(Integer.max(maxHeightElement.get(), (int) inner.getHeight()));
+                forAddition.add(inner);
             }
-        }
+        drawn.addAll(forAddition);
     }
 
-    private void drawSingle(ArrayList<UMLClass> umlClasses, ArrayList<UMLClass> drawn, AtomicInteger coordinateX, int coordinateY, AtomicInteger maxHeightElement, Graphics2D g2d) {
+    private void drawSingle(ArrayList<UMLClass> umlClasses, AtomicInteger coordinateX, int coordinateY, AtomicInteger maxHeightElement, Graphics2D g2d) {
         for (UMLClass umlClass : umlClasses) {
             if (umlClass.getParents().size() == 0 &&
                     umlClass.getChildren().size() == 0) {
                 umlClass.defX(coordinateX.get()).defY(coordinateY).draw(g2d);
                 coordinateX.addAndGet((int) (umlClass.getWidth() + 100));
                 maxHeightElement.set(Integer.max(maxHeightElement.get(), (int) umlClass.getHeight()));
-                drawn.add(umlClass);
             }
         }
     }
@@ -134,10 +138,11 @@ public class UMLBuilderAction extends AnAction {
         for (UMLClass umlClass : umlClasses) {
             int numerator = 1;
             int denominator = umlClass.getChildren().size() + umlClass.getInners().size();
-            for (int i = 0; i < umlClass.getChildren().size(); i++)
-                umlClass.linkClass(umlClass.getChildren().get(i), umlClass.getChildren().get(i).getLinkClass(10, numerator++, denominator), g2d);
-            for (int i = 0; i < umlClass.getInners().size(); i++)
-                umlClass.linkClass(umlClass.getInners().get(i), umlClass.getInners().get(i).getLinkClass(10, numerator++, denominator), g2d);
+
+            for (UMLClass children : umlClass.getChildren())
+                umlClass.linkClass(children, children.getLinkClass(10, numerator++, denominator), g2d);
+            for (UMLClass inner : umlClass.getInners())
+                umlClass.linkClass(inner, inner.getLinkClass(10, numerator++, denominator), g2d);
         }
     }
 
@@ -240,6 +245,7 @@ public class UMLBuilderAction extends AnAction {
                 .addChild(umlClasses.get(i));
 
         umlClass.linkType = UMLRelationship.LinkType.INHERIT;
+        umlClasses.get(i).linkType = UMLRelationship.LinkType.INHERIT;
         umlClasses.get(i).addParent(umlClass);
 
         umlClasses.add(umlClass);
@@ -293,7 +299,7 @@ public class UMLBuilderAction extends AnAction {
             windowSize.height = Integer.max(windowSize.height, (int) umlClass.getHeight());
         }
 
-        windowSize.height = windowSize.height*2 + 200;
+        windowSize.height = windowSize.height*3 + 200;
 
         return windowSize;
     }
