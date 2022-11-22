@@ -43,6 +43,9 @@ public class UMLClass extends UMLFigure {
     private final FontRenderContext fontRenderContext = new FontRenderContext(new AffineTransform(), true, true);
 
 
+    /**
+     * @param g2d объект графики
+     */
     @Override
     public void draw(Graphics2D g2d) {
         g2d.setColor(JBColor.black);
@@ -73,6 +76,11 @@ public class UMLClass extends UMLFigure {
         drawContentClass(g2d);
     }
 
+    /**
+     * @param out класс, который будет присоединен к текущему классу
+     * @param relationship объект связи
+     * @param g2d объект графики
+     */
     public void linkClass(UMLClass out, UMLRelationship relationship, Graphics2D g2d) {
         int inaccuracy = 150;
 
@@ -83,6 +91,13 @@ public class UMLClass extends UMLFigure {
 
         relationship.draw(g2d);
     }
+
+    /**
+     * @param first класс, из которого "выходит" стрелка связи
+     * @param second класс, к которому присоединяется предыдущий
+     * @param relationship объект связи
+     * @param arrowDirection направление связи
+     */
     private void initializeRelationship(UMLClass first, UMLClass second, UMLRelationship relationship, UMLRelationship.ArrowDirection arrowDirection) {
         UMLClass a = new UMLClass()
                 .defX(first.x)
@@ -100,27 +115,23 @@ public class UMLClass extends UMLFigure {
                 b.x += b.width + relationship.getSizeArrow();
                 a.y += a.height / (relationship.getDenominatorOfRelations() +1) * relationship.getNumeratorOfRelations();
                 b.y += b.height / (relationship.getDenominatorOfRelations() +1) * relationship.getNumeratorOfRelations();
-                test(a, b, "LEFT");
                 break;
             case RIGHT:
                 a.x += a.width;
                 b.x -= relationship.getSizeArrow();
                 a.y += a.height / (relationship.getDenominatorOfRelations() +1) * relationship.getNumeratorOfRelations();
                 b.y += b.height / (relationship.getDenominatorOfRelations() +1) * relationship.getNumeratorOfRelations();
-                test(a, b, "RIGHT");
                 break;
             case DOWN:
                 b.y += b.height + relationship.getSizeArrow();
                 a.x += a.width / (relationship.getDenominatorOfRelations() +1) * relationship.getNumeratorOfRelations();
                 b.x += b.width / (relationship.getDenominatorOfRelations() +1) * relationship.getNumeratorOfRelations();
-                test(a, b, "DOWN");
                 break;
             case UP:
                 a.y += a.height;
                 b.y -= relationship.getSizeArrow();
                 a.x += a.width / (relationship.getDenominatorOfRelations() +1) * relationship.getNumeratorOfRelations();
                 b.x += b.width / (relationship.getDenominatorOfRelations() +1) * relationship.getNumeratorOfRelations();
-                test(a, b, "UP");
                 break;
         }
 
@@ -171,6 +182,11 @@ public class UMLClass extends UMLFigure {
         }
     }
 
+    /**
+     * @param g2d объект графики
+     * @param type тип класса
+     * @param hexCode цвет
+     */
     private void drawTypeClassCircle(Graphics2D g2d, String type, String hexCode) {
         g2d.setColor(Color.decode(hexCode));
         g2d.fillOval(this.x + margin, this.y + margin, widthOval, heightOval);
@@ -196,6 +212,12 @@ public class UMLClass extends UMLFigure {
         drawContentClassStrings(g2d, currentY, methods);
     }
 
+    /**
+     * @param sizeArrow размер стрелки
+     * @param n порядковый номер рисуемой стрелки
+     * @param m общее количество стрелок
+     * @return возвращает объект связи
+     */
     public UMLRelationship getLinkClass(int sizeArrow, int n, int m) {
         switch (this.linkType) {
             case INHERIT: return new UMLInheritRelationship(sizeArrow, n, m);
@@ -205,6 +227,11 @@ public class UMLClass extends UMLFigure {
         }
     }
 
+    /**
+     * @param g2d объект графики
+     * @param currentY текущее значение координаты игрек
+     * @param listString лист строк для отрисовки
+     */
     private void drawContentClassStrings(Graphics2D g2d, AtomicInteger currentY, ArrayList<String> listString) {
         for (String item : listString) {
             g2d.drawString(item, (int) (this.x + this.width / 2 - getTextWidth(item) / 2), currentY.get());
@@ -295,11 +322,5 @@ public class UMLClass extends UMLFigure {
     }
     public String getName() {
         return name;
-    }
-
-    ///test
-    private void test(UMLClass a, UMLClass b, String testMessage) {
-        System.out.println(testMessage + "\n" + a.x + " " + a.y + "<--Class A\n" +
-                b.x + " " + b.y + "<--Class B");
     }
 }
