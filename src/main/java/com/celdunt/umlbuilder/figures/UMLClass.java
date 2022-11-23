@@ -21,6 +21,7 @@ public class UMLClass extends UMLFigure {
         INTERFACE,
         ENUM
     }
+
     private final int widthOval = 25;
     private final int heightOval = 25;
     private final int margin = 6;
@@ -33,10 +34,12 @@ public class UMLClass extends UMLFigure {
     private final ArrayList<UMLClass> parents = new ArrayList<>();
     private final ArrayList<UMLClass> children = new ArrayList<>();
     private final ArrayList<UMLClass> inners = new ArrayList<>();
+    private final ArrayList<UMLClass> compositions = new ArrayList<>();
 
     private PsiJavaCodeReferenceElement[] rawExtends;
     private PsiJavaCodeReferenceElement[] rawImplements;
     private PsiClass[] rawInners;
+    private String classCode = "";
 
 
     private final Font font = new Font("Arial", Font.PLAIN, 12);
@@ -52,7 +55,13 @@ public class UMLClass extends UMLFigure {
 
         calculateSizeClassRectangle();
 
+        g2d.setStroke(new BasicStroke(2));
         g2d.drawRect(this.x, this.y, (int) this.width, (int) this.height);
+        g2d.setColor(JBColor.white);
+        g2d.fillRect(this.x + 1, this.y + 1, (int) this.width - 1, (int) this.height - 1);
+
+        g2d.setColor(JBColor.black);
+        g2d.setStroke(new BasicStroke(1));
 
         String abstractHexCode = "#5d8aa8";
         String classHexCode = "#915c83";
@@ -77,15 +86,17 @@ public class UMLClass extends UMLFigure {
     }
 
     /**
-     * @param out класс, который будет присоединен к текущему классу
+     * @param out          класс, который будет присоединен к текущему классу
      * @param relationship объект связи
-     * @param g2d объект графики
+     * @param g2d          объект графики
      */
     public void linkClass(UMLClass out, UMLRelationship relationship, Graphics2D g2d) {
         int inaccuracy = 150;
 
-        if (out.x > this.x && out.y - this.y <= Math.abs(inaccuracy)) initializeRelationship(out, this, relationship, UMLRelationship.ArrowDirection.LEFT);
-        else if (this.x > out.x && out.y - this.y <= Math.abs(inaccuracy)) initializeRelationship(out, this, relationship, UMLRelationship.ArrowDirection.RIGHT);
+        if (out.x > this.x + this.width && out.y - this.y <= Math.abs(inaccuracy))
+            initializeRelationship(out, this, relationship, UMLRelationship.ArrowDirection.LEFT);
+        else if (this.x > out.x + out.width && out.y - this.y <= Math.abs(inaccuracy))
+            initializeRelationship(out, this, relationship, UMLRelationship.ArrowDirection.RIGHT);
         else if (out.y > this.y) initializeRelationship(out, this, relationship, UMLRelationship.ArrowDirection.DOWN);
         else if (this.y > out.y) initializeRelationship(out, this, relationship, UMLRelationship.ArrowDirection.UP);
 
@@ -93,9 +104,9 @@ public class UMLClass extends UMLFigure {
     }
 
     /**
-     * @param first класс, из которого "выходит" стрелка связи
-     * @param second класс, к которому присоединяется предыдущий
-     * @param relationship объект связи
+     * @param first          класс, из которого "выходит" стрелка связи
+     * @param second         класс, к которому присоединяется предыдущий
+     * @param relationship   объект связи
      * @param arrowDirection направление связи
      */
     private void initializeRelationship(UMLClass first, UMLClass second, UMLRelationship relationship, UMLRelationship.ArrowDirection arrowDirection) {
@@ -113,25 +124,25 @@ public class UMLClass extends UMLFigure {
         switch (arrowDirection) {
             case LEFT:
                 b.x += b.width + relationship.getSizeArrow();
-                a.y += a.height / (relationship.getDenominatorOfRelations() +1) * relationship.getNumeratorOfRelations();
-                b.y += b.height / (relationship.getDenominatorOfRelations() +1) * relationship.getNumeratorOfRelations();
+                a.y += a.height / (relationship.getDenominatorOfRelations() + 1) * relationship.getNumeratorOfRelations();
+                b.y += b.height / (relationship.getDenominatorOfRelations() + 1) * relationship.getNumeratorOfRelations();
                 break;
             case RIGHT:
                 a.x += a.width;
                 b.x -= relationship.getSizeArrow();
-                a.y += a.height / (relationship.getDenominatorOfRelations() +1) * relationship.getNumeratorOfRelations();
-                b.y += b.height / (relationship.getDenominatorOfRelations() +1) * relationship.getNumeratorOfRelations();
+                a.y += a.height / (relationship.getDenominatorOfRelations() + 1) * relationship.getNumeratorOfRelations();
+                b.y += b.height / (relationship.getDenominatorOfRelations() + 1) * relationship.getNumeratorOfRelations();
                 break;
             case DOWN:
                 b.y += b.height + relationship.getSizeArrow();
-                a.x += a.width / (relationship.getDenominatorOfRelations() +1) * relationship.getNumeratorOfRelations();
-                b.x += b.width / (relationship.getDenominatorOfRelations() +1) * relationship.getNumeratorOfRelations();
+                a.x += a.width / (relationship.getDenominatorOfRelations() + 1) * relationship.getNumeratorOfRelations();
+                b.x += b.width / (relationship.getDenominatorOfRelations() + 1) * relationship.getNumeratorOfRelations();
                 break;
             case UP:
                 a.y += a.height;
                 b.y -= relationship.getSizeArrow();
-                a.x += a.width / (relationship.getDenominatorOfRelations() +1) * relationship.getNumeratorOfRelations();
-                b.x += b.width / (relationship.getDenominatorOfRelations() +1) * relationship.getNumeratorOfRelations();
+                a.x += a.width / (relationship.getDenominatorOfRelations() + 1) * relationship.getNumeratorOfRelations();
+                b.x += b.width / (relationship.getDenominatorOfRelations() + 1) * relationship.getNumeratorOfRelations();
                 break;
         }
 
@@ -183,8 +194,8 @@ public class UMLClass extends UMLFigure {
     }
 
     /**
-     * @param g2d объект графики
-     * @param type тип класса
+     * @param g2d     объект графики
+     * @param type    тип класса
      * @param hexCode цвет
      */
     private void drawTypeClassCircle(Graphics2D g2d, String type, String hexCode) {
@@ -214,22 +225,26 @@ public class UMLClass extends UMLFigure {
 
     /**
      * @param sizeArrow размер стрелки
-     * @param n порядковый номер рисуемой стрелки
-     * @param m общее количество стрелок
+     * @param n         порядковый номер рисуемой стрелки
+     * @param m         общее количество стрелок
      * @return возвращает объект связи
      */
     public UMLRelationship getLinkClass(int sizeArrow, int n, int m) {
         switch (this.linkType) {
-            case INHERIT: return new UMLInheritRelationship(sizeArrow, n, m);
-            case DEPENDENCE: return new UMLDependenceRelationship(sizeArrow, n, m);
-            case INNER: return new UMLInnerRelationship(sizeArrow, n, m);
-            default: return new UMLInheritRelationship(0, 0, 0);
+            case INHERIT:
+                return new UMLInheritRelationship(sizeArrow, n, m);
+            case DEPENDENCE:
+                return new UMLDependenceRelationship(sizeArrow, n, m);
+            case INNER:
+                return new UMLInnerRelationship(sizeArrow, n, m);
+            default:
+                return new UMLInheritRelationship(0, 0, 0);
         }
     }
 
     /**
-     * @param g2d объект графики
-     * @param currentY текущее значение координаты игрек
+     * @param g2d        объект графики
+     * @param currentY   текущее значение координаты игрек
      * @param listString лист строк для отрисовки
      */
     private void drawContentClassStrings(Graphics2D g2d, AtomicInteger currentY, ArrayList<String> listString) {
@@ -278,12 +293,20 @@ public class UMLClass extends UMLFigure {
         this.methods.addAll(methods);
         return this;
     }
+
+    public UMLClass defClassCode(String classCode) {
+        this.classCode = classCode;
+        return this;
+    }
+
     public void defRawExtends(PsiJavaCodeReferenceElement[] rawExtends) {
         this.rawExtends = rawExtends;
     }
+
     public void defRawImplements(PsiJavaCodeReferenceElement[] rawImplements) {
         this.rawImplements = rawImplements;
     }
+
     public void defRawInners(PsiClass[] rawInners) {
         this.rawInners = rawInners;
     }
@@ -291,9 +314,11 @@ public class UMLClass extends UMLFigure {
     public PsiJavaCodeReferenceElement[] getRawExtends() {
         return rawExtends;
     }
+
     public PsiJavaCodeReferenceElement[] getRawImplements() {
         return rawImplements;
     }
+
     public PsiClass[] getRawInners() {
         return rawInners;
     }
@@ -302,25 +327,44 @@ public class UMLClass extends UMLFigure {
         if (!parents.contains(parent))
             parents.add(parent);
     }
+
     public UMLClass addChild(UMLClass child) {
         if (!children.contains(child))
             children.add(child);
         return this;
     }
+
     public void addInner(UMLClass inner) {
         this.inners.add(inner);
+    }
+
+    public void addComposite(UMLClass composite) {
+        this.compositions.add(composite);
     }
 
     public ArrayList<UMLClass> getParents() {
         return parents;
     }
+
     public ArrayList<UMLClass> getChildren() {
         return children;
     }
+
     public ArrayList<UMLClass> getInners() {
         return inners;
     }
+
+    public ArrayList<UMLClass> getCompositions() {
+        return compositions;
+    }
+
+    public int getX() {
+        return x;
+    }
     public String getName() {
         return name;
+    }
+    public String getClassCode() {
+        return classCode;
     }
 }

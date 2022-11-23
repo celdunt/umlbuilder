@@ -1,6 +1,7 @@
 package com.celdunt.umlbuilder.actions;
 
 import com.celdunt.umlbuilder.figures.UMLClass;
+import com.celdunt.umlbuilder.relationships.UMLCompositionRelationship;
 import com.celdunt.umlbuilder.relationships.UMLRelationship;
 import com.celdunt.umlbuilder.wrapers.WindowSize;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -23,6 +24,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
 
 import static com.intellij.util.ui.ImageUtil.createImage;
 
@@ -51,8 +53,8 @@ public class UMLBuilderAction extends AnAction {
 
     /**
      * @param umlClasses лист классов, которые были получены из проекта
-     * @param g2d объект графики
-     * @param newSize размер окна(полотна)
+     * @param g2d        объект графики
+     * @param newSize    размер окна(полотна)
      */
     private void drawUML(ArrayList<UMLClass> umlClasses, Graphics2D g2d, WindowSize newSize) {
         AtomicInteger coordinateX = new AtomicInteger(5);
@@ -63,14 +65,14 @@ public class UMLBuilderAction extends AnAction {
 
         ArrayList<UMLClass> drawn = new ArrayList<>();
 
-        drawParents(umlClasses, drawn, coordinateX, coordinateY, maxHeightElement, g2d);
+        defineParentsData(umlClasses, drawn, coordinateX, coordinateY, maxHeightElement);
 
         coordinateY += maxHeightElement.get() + 100;
         maxWidth = Integer.max(coordinateX.get(), maxWidth);
         coordinateX.set(5);
         maxHeightElement.set(0);
 
-        drawOther(umlClasses, drawn, coordinateX, coordinateY, maxHeightElement, g2d);
+        defineOtherData(umlClasses, drawn, coordinateX, coordinateY, maxHeightElement);
 
         maxWidth = Integer.max(coordinateX.get(), maxWidth);
 
@@ -78,21 +80,21 @@ public class UMLBuilderAction extends AnAction {
         newSize.height = maxHeightElement.get() + 10;
 
         drawRelations(umlClasses, g2d);
+        drawClasses(drawn, g2d);
     }
 
     /**
-     * @param umlClasses Лист классов, которые будут отрисованы
-     * @param drawn Лист классов для заполнения; в этот лист будут добавлены уже отрисованные классы
-     * @param coordinateX переменная координаты икс, которая будет увеличиваться для каждого нового не отрисованного класса
-     * @param coordinateY переменная координаты игрек
+     * @param umlClasses       Лист классов, которые будут отрисованы
+     * @param drawn            Лист классов для заполнения; в этот лист будут добавлены уже отрисованные классы
+     * @param coordinateX      переменная координаты икс, которая будет увеличиваться для каждого нового не отрисованного класса
+     * @param coordinateY      переменная координаты игрек
      * @param maxHeightElement максимальная высота отрисованной фигуры; необходима для указания правильного отступа по вертикали
-     * @param g2d объект графики
      */
-    private void drawParents(ArrayList<UMLClass> umlClasses, ArrayList<UMLClass> drawn, AtomicInteger coordinateX, int coordinateY,
-                             AtomicInteger maxHeightElement, Graphics2D g2d) {
+    private void defineParentsData(ArrayList<UMLClass> umlClasses, ArrayList<UMLClass> drawn, AtomicInteger coordinateX, int coordinateY,
+                                   AtomicInteger maxHeightElement) {
         for (UMLClass umlClass : umlClasses) {
             if (umlClass.getChildren().size() > 0) {
-                umlClass.defX(coordinateX.get()).defY(coordinateY).draw(g2d);
+                umlClass.defX(coordinateX.get()).defY(coordinateY);
                 coordinateX.addAndGet((int) (umlClass.getWidth() + 100));
                 maxHeightElement.set(Integer.max(maxHeightElement.get(), (int) umlClass.getHeight()));
                 drawn.add(umlClass);
@@ -101,15 +103,14 @@ public class UMLBuilderAction extends AnAction {
     }
 
     /**
-     * @param umlClasses лист классов, которые будут отрисованы
-     * @param drawn лист уже отрисованных классов
-     * @param coordinateX координата икс
-     * @param coordinateY координата игрек
+     * @param umlClasses       лист классов, которые будут отрисованы
+     * @param drawn            лист уже отрисованных классов
+     * @param coordinateX      координата икс
+     * @param coordinateY      координата игрек
      * @param maxHeightElement максимальная высота отрисованного элемента
-     * @param g2d объект графики
      */
-    private void drawOther(ArrayList<UMLClass> umlClasses, ArrayList<UMLClass> drawn, AtomicInteger coordinateX, int coordinateY,
-                           AtomicInteger maxHeightElement, Graphics2D g2d) {
+    private void defineOtherData(ArrayList<UMLClass> umlClasses, ArrayList<UMLClass> drawn, AtomicInteger coordinateX, int coordinateY,
+                                 AtomicInteger maxHeightElement) {
         ArrayList<UMLClass> drawnInners = new ArrayList<>();
         AtomicInteger innerCoordinateX = new AtomicInteger(5);
         int innerCoordinateY = coordinateY + maxHeightElement.get();
@@ -119,36 +120,38 @@ public class UMLBuilderAction extends AnAction {
         for (UMLClass umlClass : drawn) {
             for (UMLClass children : umlClass.getChildren())
                 if (!forAddition.contains(children)) {
-                    children.defX(coordinateX.get()).defY(coordinateY).draw(g2d);
+                    children.defX(coordinateX.get()).defY(coordinateY);
                     coordinateX.addAndGet((int) (children.getWidth() + 100));
                     maxHeightElement.set(Integer.max(maxHeightElement.get(), (int) children.getHeight()));
                     forAddition.add(children);
                     innerCoordinateY = coordinateY + maxHeightElement.get() + 200;
-                    drawInners(children.getInners(), drawnInners, innerCoordinateX, innerCoordinateY, maxHeightElement, g2d);
+                    innerCoordinateX.set(children.getX());
+                    defineInnersData(children.getInners(), drawnInners, innerCoordinateX, innerCoordinateY, maxHeightElement);
                 }
-            drawInners(umlClass.getInners(), drawnInners, coordinateX, coordinateY, maxHeightElement, g2d);
+            innerCoordinateX.set(umlClass.getX());
+            defineInnersData(umlClass.getInners(), drawnInners, coordinateX, coordinateY, maxHeightElement);
         }
         drawn.clear();
         drawn.addAll(forAddition);
+        drawn.addAll(drawnInners);
         maxHeightElement.set(0);
-        drawSingle(umlClasses, innerCoordinateX, innerCoordinateY, maxHeightElement, g2d);
-        maxHeightElement.addAndGet((int)(innerCoordinateY*1.3));
+        defineSingleData(umlClasses, drawn, innerCoordinateX, innerCoordinateY, maxHeightElement);
+        maxHeightElement.addAndGet((int) (innerCoordinateY * 1.3));
     }
 
     /**
-     * @param umlInners лист классов, для отрисовки
-     * @param drawn лист уже отрисованных классов
-     * @param coordinateX координата икс
-     * @param coordinateY координата игрек
+     * @param umlInners        лист классов, для отрисовки
+     * @param drawn            лист уже отрисованных классов
+     * @param coordinateX      координата икс
+     * @param coordinateY      координата игрек
      * @param maxHeightElement максимальная высота уже отрисованного элемента
-     * @param g2d объект графики
      */
-    private void drawInners(ArrayList<UMLClass> umlInners, ArrayList<UMLClass> drawn, AtomicInteger coordinateX, int coordinateY,
-                            AtomicInteger maxHeightElement, Graphics2D g2d) {
+    private void defineInnersData(ArrayList<UMLClass> umlInners, ArrayList<UMLClass> drawn, AtomicInteger coordinateX, int coordinateY,
+                                  AtomicInteger maxHeightElement) {
         ArrayList<UMLClass> forAddition = new ArrayList<>();
         for (UMLClass inner : umlInners)
             if (!drawn.contains(inner)) {
-                inner.defX(coordinateX.get()).defY(coordinateY).draw(g2d);
+                inner.defX(coordinateX.get()).defY(coordinateY);
                 coordinateX.addAndGet((int) (inner.getWidth() + 100));
                 maxHeightElement.set(Integer.max(maxHeightElement.get(), (int) inner.getHeight()));
                 forAddition.add(inner);
@@ -157,37 +160,44 @@ public class UMLBuilderAction extends AnAction {
     }
 
     /**
-     * @param umlClasses лист классов для отрисовки
-     * @param coordinateX координата икс
-     * @param coordinateY координата игрек
+     * @param umlClasses       лист классов для отрисовки
+     * @param coordinateX      координата икс
+     * @param coordinateY      координата игрек
      * @param maxHeightElement максимальная высота отрисованного элемента
-     * @param g2d объект графики
      */
-    private void drawSingle(ArrayList<UMLClass> umlClasses, AtomicInteger coordinateX, int coordinateY, AtomicInteger maxHeightElement, Graphics2D g2d) {
+    private void defineSingleData(ArrayList<UMLClass> umlClasses, ArrayList<UMLClass> drawn, AtomicInteger coordinateX, int coordinateY, AtomicInteger maxHeightElement) {
         for (UMLClass umlClass : umlClasses) {
             if (umlClass.getParents().size() == 0 &&
                     umlClass.getChildren().size() == 0) {
-                umlClass.defX(coordinateX.get()).defY(coordinateY).draw(g2d);
+                umlClass.defX(coordinateX.get()).defY(coordinateY);
                 coordinateX.addAndGet((int) (umlClass.getWidth() + 100));
                 maxHeightElement.set(Integer.max(maxHeightElement.get(), (int) umlClass.getHeight()));
+                drawn.add(umlClass);
             }
         }
     }
 
     /**
      * @param umlClasses лист отрисованных классов
-     * @param g2d объект графики
+     * @param g2d        объект графики
      */
     private void drawRelations(ArrayList<UMLClass> umlClasses, Graphics2D g2d) {
         for (UMLClass umlClass : umlClasses) {
             int numerator = 1;
-            int denominator = umlClass.getChildren().size() + umlClass.getInners().size();
+            int denominator = umlClass.getChildren().size() + umlClass.getInners().size() + umlClass.getCompositions().size();
 
             for (UMLClass children : umlClass.getChildren())
                 umlClass.linkClass(children, children.getLinkClass(10, numerator++, denominator), g2d);
             for (UMLClass inner : umlClass.getInners())
                 umlClass.linkClass(inner, inner.getLinkClass(10, numerator++, denominator), g2d);
+            for (UMLClass composite : umlClass.getCompositions())
+                umlClass.linkClass(composite, new UMLCompositionRelationship(10, numerator++, denominator), g2d);
         }
+    }
+
+    private void drawClasses(ArrayList<UMLClass> umlClasses, Graphics2D g2d) {
+        for (UMLClass umlClass : umlClasses)
+            umlClass.draw(g2d);
     }
 
     /**
@@ -205,7 +215,7 @@ public class UMLBuilderAction extends AnAction {
 
                 PsiReferenceList extendsList = ((PsiClass) classUnit).getExtendsList();
                 PsiReferenceList implementsList = ((PsiClass) classUnit).getImplementsList();
-                PsiClass[] innersList = ((PsiClass)classUnit).getInnerClasses();
+                PsiClass[] innersList = ((PsiClass) classUnit).getInnerClasses();
 
                 UMLClass added = new UMLClass();
 
@@ -220,6 +230,7 @@ public class UMLBuilderAction extends AnAction {
                         .defName(((PsiClass) classUnit).getName())
                         .defFields(fields)
                         .defMethods(methods)
+                        .defClassCode(((PsiClass) classUnit).getText())
                         .calculateSizeClassRectangle());
             }
         }
@@ -235,12 +246,13 @@ public class UMLBuilderAction extends AnAction {
             defineParentsAsExtends(umlClasses, i);
             defineParentsAsImplements(umlClasses, i);
             defineInnerClasses(umlClasses, i);
+            defineCompositeClasses(umlClasses, i);
         }
     }
 
     /**
      * @param umlClasses лист классов
-     * @param i индекс объекта в листе классов
+     * @param i          индекс объекта в листе классов
      */
     private void defineParentsAsExtends(ArrayList<UMLClass> umlClasses, int i) {
         boolean extendsInUmlClasses = false;
@@ -275,6 +287,7 @@ public class UMLBuilderAction extends AnAction {
             }
         }
     }
+
     private void defineInnerClasses(ArrayList<UMLClass> umlClasses, int i) {
         if (umlClasses.get(i).getRawInners() != null && umlClasses.get(i).getRawInners().length > 0) {
             for (PsiClass element : umlClasses.get(i).getRawInners()) {
@@ -293,11 +306,23 @@ public class UMLBuilderAction extends AnAction {
         }
     }
 
+    private void defineCompositeClasses(ArrayList<UMLClass> umlClasses, int i) {
+        for (int j = 0; j < umlClasses.size(); j++) {
+            Pattern pattern = Pattern.compile("\\W" + umlClasses.get(j).getName() + "\\W");
+
+            if (j != i && pattern.matcher(umlClasses.get(i).getClassCode()).find()
+                    && !umlClasses.get(i).getInners().contains(umlClasses.get(j))
+                    && !umlClasses.get(i).getParents().contains(umlClasses.get(j))) {
+                umlClasses.get(i).addComposite(umlClasses.get(j));
+            }
+        }
+    }
+
     /**
      * @param umlClasses лист классов
-     * @param umlType типа класса
-     * @param element экземпляр объекта, указывающий на класс-родитель
-     * @param i индекс объекта в листе umlCLasses
+     * @param umlType    тип класса
+     * @param element    экземпляр объекта, указывающий на класс-родитель
+     * @param i          индекс объекта в листе umlCLasses
      */
     private void defineUnknownClass(ArrayList<UMLClass> umlClasses, UMLClass.ClassType umlType, PsiJavaCodeReferenceElement element, int i) {
         UMLClass umlClass = new UMLClass()
@@ -338,8 +363,8 @@ public class UMLBuilderAction extends AnAction {
 
     /**
      * @param bufferedImage объект изображения
-     * @param width ширина изображения
-     * @param height высота изображения
+     * @param width         ширина изображения
+     * @param height        высота изображения
      * @return возвращает объект графики
      */
     private Graphics2D createGraphics(BufferedImage bufferedImage, int width, int height) {
@@ -360,7 +385,7 @@ public class UMLBuilderAction extends AnAction {
     private UMLClass.ClassType getInActionClassType(PsiClass item) {
         return item.isInterface() ? UMLClass.ClassType.INTERFACE :
                 Objects.requireNonNull(item.getModifierList()).toString().contains("abstract") ? UMLClass.ClassType.ABSTRACT :
-                        item.isEnum() ? UMLClass.ClassType.ENUM: UMLClass.ClassType.CLASS;
+                        item.isEnum() ? UMLClass.ClassType.ENUM : UMLClass.ClassType.CLASS;
     }
 
     /**
@@ -386,14 +411,14 @@ public class UMLBuilderAction extends AnAction {
             windowSize.height = Integer.max(windowSize.height, (int) umlClass.getHeight());
         }
 
-        windowSize.height = windowSize.height*10 + 200;
+        windowSize.height = windowSize.height * 10 + 200;
 
         return windowSize;
     }
 
     /**
      * @param bufferedImage изображение для сохранения
-     * @param path путь, куда изображение будет сохранено
+     * @param path          путь, куда изображение будет сохранено
      */
     private void saveGraphicsAsImage(BufferedImage bufferedImage, String path) {
         try {
