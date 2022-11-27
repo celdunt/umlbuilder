@@ -34,7 +34,7 @@ public class UMLClass extends UMLFigure {
     private final ArrayList<UMLClass> parents = new ArrayList<>();
     private final ArrayList<UMLClass> children = new ArrayList<>();
     private final ArrayList<UMLClass> inners = new ArrayList<>();
-    private final ArrayList<UMLClass> compositions = new ArrayList<>();
+    private final ArrayList<UMLClass> associations = new ArrayList<>();
 
     private PsiJavaCodeReferenceElement[] rawExtends;
     private PsiJavaCodeReferenceElement[] rawImplements;
@@ -91,11 +91,11 @@ public class UMLClass extends UMLFigure {
      * @param g2d          объект графики
      */
     public void linkClass(UMLClass out, UMLRelationship relationship, Graphics2D g2d) {
-        int inaccuracy = 150;
+        int inaccuracy = 100;
 
-        if (out.x > this.x + this.width && out.y - this.y <= Math.abs(inaccuracy))
+        if (out.x > this.x + this.width && Math.abs(out.y - this.y) <= inaccuracy)
             initializeRelationship(out, this, relationship, UMLRelationship.ArrowDirection.LEFT);
-        else if (this.x > out.x + out.width && out.y - this.y <= Math.abs(inaccuracy))
+        else if (this.x > out.x + out.width && Math.abs(out.y - this.y) <= inaccuracy)
             initializeRelationship(out, this, relationship, UMLRelationship.ArrowDirection.RIGHT);
         else if (out.y > this.y) initializeRelationship(out, this, relationship, UMLRelationship.ArrowDirection.DOWN);
         else if (this.y > out.y) initializeRelationship(out, this, relationship, UMLRelationship.ArrowDirection.UP);
@@ -338,8 +338,8 @@ public class UMLClass extends UMLFigure {
         this.inners.add(inner);
     }
 
-    public void addComposite(UMLClass composite) {
-        this.compositions.add(composite);
+    public void addAssociation(UMLClass association) {
+        this.associations.add(association);
     }
 
     public ArrayList<UMLClass> getParents() {
@@ -354,8 +354,8 @@ public class UMLClass extends UMLFigure {
         return inners;
     }
 
-    public ArrayList<UMLClass> getCompositions() {
-        return compositions;
+    public ArrayList<UMLClass> getAssociations() {
+        return associations;
     }
 
     public int getX() {

@@ -1,7 +1,7 @@
 package com.celdunt.umlbuilder.actions;
 
 import com.celdunt.umlbuilder.figures.UMLClass;
-import com.celdunt.umlbuilder.relationships.UMLCompositionRelationship;
+import com.celdunt.umlbuilder.relationships.UMLAssociationRelationship;
 import com.celdunt.umlbuilder.relationships.UMLRelationship;
 import com.celdunt.umlbuilder.wrapers.WindowSize;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -184,14 +184,14 @@ public class UMLBuilderAction extends AnAction {
     private void drawRelations(ArrayList<UMLClass> umlClasses, Graphics2D g2d) {
         for (UMLClass umlClass : umlClasses) {
             int numerator = 1;
-            int denominator = umlClass.getChildren().size() + umlClass.getInners().size() + umlClass.getCompositions().size();
+            int denominator = umlClass.getChildren().size() + umlClass.getInners().size() + umlClass.getAssociations().size();
 
             for (UMLClass children : umlClass.getChildren())
                 umlClass.linkClass(children, children.getLinkClass(10, numerator++, denominator), g2d);
             for (UMLClass inner : umlClass.getInners())
                 umlClass.linkClass(inner, inner.getLinkClass(10, numerator++, denominator), g2d);
-            for (UMLClass composite : umlClass.getCompositions())
-                umlClass.linkClass(composite, new UMLCompositionRelationship(10, numerator++, denominator), g2d);
+            for (UMLClass association : umlClass.getAssociations())
+                umlClass.linkClass(association, new UMLAssociationRelationship(10, numerator++, denominator), g2d);
         }
     }
 
@@ -246,7 +246,7 @@ public class UMLBuilderAction extends AnAction {
             defineParentsAsExtends(umlClasses, i);
             defineParentsAsImplements(umlClasses, i);
             defineInnerClasses(umlClasses, i);
-            defineCompositeClasses(umlClasses, i);
+            defineAssociationClasses(umlClasses, i);
         }
     }
 
@@ -306,14 +306,14 @@ public class UMLBuilderAction extends AnAction {
         }
     }
 
-    private void defineCompositeClasses(ArrayList<UMLClass> umlClasses, int i) {
+    private void defineAssociationClasses(ArrayList<UMLClass> umlClasses, int i) {
         for (int j = 0; j < umlClasses.size(); j++) {
             Pattern pattern = Pattern.compile("\\W" + umlClasses.get(j).getName() + "\\W");
 
             if (j != i && pattern.matcher(umlClasses.get(i).getClassCode()).find()
                     && !umlClasses.get(i).getInners().contains(umlClasses.get(j))
                     && !umlClasses.get(i).getParents().contains(umlClasses.get(j))) {
-                umlClasses.get(i).addComposite(umlClasses.get(j));
+                umlClasses.get(j).addAssociation(umlClasses.get(i));
             }
         }
     }
